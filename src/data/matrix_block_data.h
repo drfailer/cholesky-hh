@@ -1,10 +1,11 @@
 #ifndef MATRIX_BLOCK_DATA_H
 #define MATRIX_BLOCK_DATA_H
+#include "block_types.h"
 #include <cmath>
 #include <cstddef>
 #include <hedgehog/hedgehog.h>
 
-template <typename T> class MatrixBlockData {
+template <typename T, BlockTypes BlockType> class MatrixBlockData {
 public:
   MatrixBlockData(size_t blockSize, size_t x, size_t y, T *ptr, T *fullMatrix)
       : blockSize_(blockSize), x_(x), y_(y), ptr_(ptr),
