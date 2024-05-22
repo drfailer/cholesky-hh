@@ -5,8 +5,17 @@
 
 template <typename T> class MatrixData {
 public:
-  MatrixData(size_t width, size_t height, T *ptr):
-    width_(width), height_(height), ptr_(ptr) {}
+  MatrixData(size_t width, size_t height, size_t blockSize, T *ptr)
+      : width_(width), height_(height), blockSize_(blockSize),
+        nbBlocksRows_(std::ceil(height / blockSize) +
+                      (height % blockSize == 0 ? 0 : 1)),
+        nbBlocksCols_(std::ceil(width / blockSize) +
+                      (width % blockSize == 0 ? 0 : 1)),
+        ptr_(ptr) {}
+
+  size_t blockSize() const { return blockSize_; }
+  size_t nbBlocksRows() const { return nbBlocksRows_; }
+  size_t nbBlocksCols() const { return nbBlocksCols_; }
 
   size_t width() const { return width_; }
   size_t height() const { return height_; }
@@ -17,9 +26,12 @@ public:
   T *get() { return ptr_; }
 
 private:
-  T *ptr_ = nullptr;
   size_t width_ = 0;
   size_t height_ = 0;
+  size_t blockSize_ = 0;
+  size_t nbBlocksRows_ = 0;
+  size_t nbBlocksCols_ = 0;
+  T *ptr_ = nullptr;
 };
 
 #endif
