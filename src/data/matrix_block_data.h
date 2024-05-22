@@ -34,6 +34,7 @@ public:
   // helper function (warn: we use i and j here and not x and y so it's
   // inverted)
   T &at(size_t i, size_t j) { return ptr_[i * matrixWidth_ + j]; }
+  T &fullMatrixAt(size_t i, size_t j) { return fullMatrix_[i * matrixWidth_ + j]; }
 
 private:
   size_t blockSize_ = 0;

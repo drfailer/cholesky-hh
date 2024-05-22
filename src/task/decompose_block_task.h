@@ -22,18 +22,26 @@ public:
   void execute(std::shared_ptr<DBInType<T>> blocks) override {
     auto ABlock = blocks->first();
     auto LBlock = blocks->second();
+    size_t iEnd = LBlock->y() +
+                  std::min(LBlock->blockSize(), LBlock->height() - LBlock->y());
+    size_t jEnd = LBlock->x() +
+                  std::min(LBlock->blockSize(), LBlock->width() - LBlock->x());
 
-    for (size_t i = 0; i < LBlock->blockSize(); ++i) {
-      for (size_t j = 0; j <= i; ++j) {
-        T sum = LBlock->at(i, j); // we already have a partial sum here
+    for (size_t i = LBlock->y(); i < iEnd; ++i) {
+      for (size_t j = LBlock->x(); j < jEnd; ++j) {
+        if (LBlock->x() == LBlock->y() && j > i) {
+          break; // skip upper elements on the diagnal blocks
+        }
+        T sum = 0;
         for (size_t k = 0; k < j; k++) {
-          sum += (LBlock->at(i, k) * LBlock->at(j, k));
+          sum += (LBlock->fullMatrixAt(i, k) * LBlock->fullMatrixAt(j, k));
         }
 
         if (j == i) {
-          LBlock->at(i, j) = sqrt(ABlock->at(j, j) - sum);
+          LBlock->fullMatrixAt(i, j) = sqrt(ABlock->fullMatrixAt(j, j) - sum);
         } else {
-          LBlock->at(i, j) = (ABlock->at(i, j) - sum) / LBlock->at(j, j);
+          LBlock->fullMatrixAt(i, j) =
+              (ABlock->fullMatrixAt(i, j) - sum) / LBlock->fullMatrixAt(j, j);
         }
       }
     }

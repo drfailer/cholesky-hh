@@ -6,9 +6,9 @@
 
 #define SMTaskInNb 1
 #define SMTaskIn MatrixData<T>
-#define SMTaskOut MatrixBlockData<T, Block>
+#define SMTaskOut MatrixBlockData<T, BlockType>
 
-template <typename T>
+template <typename T, BlockTypes BlockType>
 class SplitMatrixTask
     : public hh::AbstractTask<SMTaskInNb, SMTaskIn, SMTaskOut> {
 public:
@@ -19,7 +19,7 @@ public:
   void execute(std::shared_ptr<MatrixData<T>> matrix) override {
     for (size_t iBlock = 0; iBlock < matrix->nbBlocksRows(); ++iBlock) {
       for (size_t jBlock = 0; jBlock < matrix->nbBlocksCols(); ++jBlock) {
-        this->addResult(std::make_shared<MatrixBlockData<T, Block>>(
+        this->addResult(std::make_shared<MatrixBlockData<T, BlockType>>(
             matrix->blockSize(), jBlock, iBlock, matrix->width(),
             matrix->height(), &matrix->get()[iBlock * matrix->width() + jBlock],
             matrix->get()));
