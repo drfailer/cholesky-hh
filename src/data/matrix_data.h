@@ -25,6 +25,16 @@ public:
 
   T *get() { return ptr_; }
 
+  friend std::ostream& operator<<(std::ostream& os, const MatrixData& matrix) {
+    for (size_t i = 0; i < matrix.height(); ++i) {
+      for (size_t j = 0; j < matrix.width(); ++j) {
+        os << matrix.ptr_[i * matrix.width() + j] << " ";
+      }
+      os << std::endl;
+    }
+    return os;
+  }
+
 private:
   size_t width_ = 0;
   size_t height_ = 0;
