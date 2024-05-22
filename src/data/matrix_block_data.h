@@ -13,9 +13,9 @@ public:
         matrixHeight_(matrixHeight), ptr_(ptr), fullMatrix_(fullMatrix) {}
 
   template <typename Other, BlockTypes OtherType>
-  MatrixBlockData(std::shared_ptr<MatrixBlockData<Other, OtherType>> &&other)
+  MatrixBlockData(std::shared_ptr<MatrixBlockData<Other, OtherType>> other)
       : MatrixBlockData(other->blockSize(), other->x(), other->y(),
-                        other->matrixWidth(), other->matriHeight(),
+                        other->matrixWidth(), other->matrixHeight(),
                         other->get(), other->fullMatrix()) {}
 
   size_t blockSize() const { return blockSize_; }

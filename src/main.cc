@@ -1,6 +1,9 @@
-#include <iostream>
+#include "graph/cholesky_decomposition_graph.h"
+
+using MatrixType = double;
 
 int main(int, char**) {
-    std::cout << "Hello, World" << std::endl;
-    return 0;
+  CholeskyDecompositionGraph<MatrixType> choleskyGraph;
+  choleskyGraph.executeGraph();
+  return 0;
 }
