@@ -4,7 +4,7 @@
 using MatrixType = double;
 
 int main(int, char**) {
-  constexpr size_t size = 3;
+  constexpr size_t size = 5;
   MatrixType matrixMem[size * size];
   MatrixType resultMem[size * size];
 
