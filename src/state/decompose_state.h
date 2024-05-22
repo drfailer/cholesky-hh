@@ -27,7 +27,7 @@ public:
       // we have to wait for the first element to be treated
       if (firstEltTreated_) {
         this->addResult(block);
-      } else {
+      } else if (block->x() <= block->y()) {
         resultBlocks_.push_back(block);
       }
     }
@@ -66,12 +66,12 @@ public:
     this->addResult(block);
   }
 
-  bool isDone() const { return resultBlocks_.size() == 0; }
+  bool isDone() const { return colIndex_ > 0 && resultBlocks_.size() == 0; }
 
 private:
   // TODO: change the vector to something more efficient for this problem (for
   // optimized version)
-  std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> resultBlocks_;
+  std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> resultBlocks_ = {};
   size_t colIndex_ = 0;
   size_t nbElementCol_ = 0;
   bool firstEltTreated_ = false;
