@@ -16,13 +16,15 @@ public:
             "Decompose block task", nbThreads) {}
 
   void execute(std::shared_ptr<MatrixBlockData<T, Block>> block) override {
-    size_t iEnd =
-        block->y() + std::min(block->blockSize(), block->matrixHeight() - block->y());
-    size_t jEnd =
-        block->x() + std::min(block->blockSize(), block->matrixWidth() - block->x());
+    size_t iBegin = block->y() * block->blockSize();
+    size_t iEnd = iBegin + std::min(block->blockSize(),
+                                    block->matrixHeight() - block->y());
+    size_t jBegin = block->x() * block->blockSize();
+    size_t jEnd = jBegin + std::min(block->blockSize(),
+                                    block->matrixWidth() - block->x());
 
-    for (size_t i = block->y(); i < iEnd; ++i) {
-      for (size_t j = block->x(); j < jEnd; ++j) {
+    for (size_t i = iBegin; i < iEnd; ++i) {
+      for (size_t j = jBegin; j < jEnd; ++j) {
         if (block->x() == block->y() && j > i) {
           break; // skip upper elements on the diagonal blocks
         }
