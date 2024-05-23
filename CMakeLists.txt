@@ -25,6 +25,15 @@ endif (NOT MSVC)
 # files
 set(cholesky_hh_files
     src/main.cc
+    src/state/decompose_state.h
+    src/state/decompose_state_manager.h
+    src/graph/cholesky_decomposition_graph.h
+    src/data/matrix_data.h
+    src/data/matrix_block_data.h
+    src/data/block_types.h
+    src/task/split_matrix_task.h
+    src/task/decompose_block_task.h
+    src/utils.h
     )
 
 # executable
