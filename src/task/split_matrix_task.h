@@ -18,11 +18,11 @@ public:
 
   void execute(std::shared_ptr<MatrixData<T>> matrix) override {
     for (size_t iBlock = 0; iBlock < matrix->nbBlocksRows(); ++iBlock) {
-      for (size_t jBlock = 0; jBlock < matrix->nbBlocksCols(); ++jBlock) {
+      for (size_t jBlock = 0; jBlock <= iBlock; ++jBlock) {
         this->addResult(std::make_shared<MatrixBlockData<T, BlockType>>(
-            matrix->blockSize(), jBlock, iBlock, matrix->width(),
-            matrix->height(), &matrix->get()[iBlock * matrix->width() + jBlock],
-            matrix->get()));
+            matrix->blockSize(), matrix->nbBlocksRows(), matrix->nbBlocksCols(),
+            jBlock, iBlock, matrix->width(), matrix->height(),
+            &matrix->get()[iBlock * matrix->width() + jBlock], matrix->get()));
       }
     }
   }
