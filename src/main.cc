@@ -29,5 +29,7 @@ int main(int, char**) {
   std::cout << *expected << std::endl;
   std::cout << "found:" << std::endl;
   std::cout << *matrix << std::endl;
+
+  assert(verrifySolution(size, matrixMem, resultMem, 1e-3));
   return 0;
 }
