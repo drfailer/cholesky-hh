@@ -37,7 +37,19 @@ class CholeskyDecompositionGraph
             updateSubMatrixState);
 
     this->inputs(splitMatrixTask);
+
     this->edges(splitMatrixTask, decomposeStateManager);
+    this->edges(decomposeStateManager, computeDiagonalBlockTask);
+    this->edges(computeDiagonalBlockTask, decomposeStateManager);
+    this->edges(decomposeStateManager, computeColumnBlockTask);
+    this->edges(computeColumnBlockTask, decomposeStateManager);
+
+    this->edges(splitMatrixTask, updateSubMatrixStateManager);
+    this->edges(computeColumnBlockTask, updateSubMatrixStateManager);
+
+    this->edges(updateSubMatrixStateManager, updateSubMatrixBlockTask);
+    this->edges(updateSubMatrixBlockTask, decomposeStateManager);
+
     this->outputs(decomposeStateManager);
   }
 };

@@ -7,22 +7,23 @@
 #include "../data/matrix_block_data.h"
 
 #define CDBTaskInNb 1
-#define CDBTaskIn MatrixBlockData<T, Block>
+#define CDBTaskIn MatrixBlockData<T, Diagonal>
 #define CDBTaskOut MatrixBlockData<T, Result>
 
 template<typename T>
 class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut > {
  public:
-  ComputeDiagonalBlockTask(size_t nbThreads) :
+  explicit ComputeDiagonalBlockTask(size_t nbThreads) :
           hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut >("Compute Diagonal Block Task",
                                                                       nbThreads) {}
 
-  void execute(std::shared_ptr<MatrixBlockData<T, Block>> block) override {
+  void execute(std::shared_ptr<MatrixBlockData<T, Diagonal>> block) override {
     int32_t n = block->blockSize();
     // todo: leading dimension should be configurable
     int32_t lda = block->matrixWidth();
     int32_t info = 0;
     LAPACK_dpotf2("L", &n, block->get(), &lda, &info);
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(block));
   }
 
   std::shared_ptr<hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut>> copy() override {
