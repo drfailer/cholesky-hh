@@ -34,7 +34,11 @@ set(cholesky_hh_files
     src/task/split_matrix_task.h
     src/task/decompose_block_task.h
     src/utils.h
-    )
+        src/task/compute_diagonal_block_task.h
+		src/task/compute_column_block_task.h
+		src/task/update_submatrix_block_task.h
+)
 
 # executable
 add_executable(cholesky-hh ${cholesky_hh_files})
+target_link_libraries(cholesky-hh openblas lapack)
