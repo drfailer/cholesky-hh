@@ -4,34 +4,36 @@
 #include <hedgehog/hedgehog.h>
 #include <openblas/cblas.h>
 #include "../data/matrix_block_data.h"
+#include "../data/triple_block_data.h"
 
 template<typename T>
-using UpdateSubmatrixBlockInputType =
-        std::pair<std::shared_ptr<MatrixBlockData<T, Block>>,
-                std::shared_ptr<MatrixBlockData<T, Block>>>;
+using UpdateSubmatrixBlockInputType = TripleBlockData<T>;
 
 #define USBTaskInNb 1
 #define USBTaskIn UpdateSubmatrixBlockInputType<T>
-#define USBTaskOut MatrixBlockData<T, Block>
+#define USBTaskOut MatrixBlockData<T, Updated>
 
 template<typename T>
-class UpdateSubmatrixBlockTask : public hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut > {
+class UpdateSubMatrixBlockTask : public hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut > {
  public:
-  UpdateSubmatrixBlockTask(size_t nbThreads) :
-          hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut >("Update Submatrix Block Task", nbThreads) {}
+  explicit UpdateSubMatrixBlockTask(size_t nbThreads) :
+          hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut >("Update Submatrix Block Task",
+                                                                nbThreads) {}
 
   void execute(std::shared_ptr<UpdateSubmatrixBlockInputType<T>> blocks) override {
-    auto ABlock = blocks->first;
-    auto LBlock = blocks->second;
+    auto L1Block = blocks->first;
+    auto L2Block = blocks->first;
+    auto ABlock = blocks->second;
     // todo: the leading dimension should be configurable
-    cblas_dsyrk(CblasRowMajor, CblasUpper, CblasNoTrans,
-                LBlock->blockSize(), LBlock->blockSize(), 1.0, LBlock->get(),
-                LBlock->matrixWidth(), 1.0, ABlock->get(), ABlock->matrixWidth());
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, L1Block->blockSize(),
+                L1Block->blockSize(), ABlock->blockSize(), -1.0, L1Block->get(), L1Block->matrixWidth(), L2Block->get(),
+                L2Block->matrixWidth(), 1.0, ABlock->get(), ABlock->matrixWidth());
+    this->addResult(std::make_shared<MatrixBlockData<T, Updated>>(ABlock));
   }
 
   std::shared_ptr<hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut >>
   copy() override {
-    return std::make_shared<UpdateSubmatrixBlockTask<T>>(this->numberThreads());
+    return std::make_shared<UpdateSubMatrixBlockTask<T>>(this->numberThreads());
   }
 };
 
