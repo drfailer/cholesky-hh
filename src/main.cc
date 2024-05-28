@@ -3,20 +3,23 @@
 
 using MatrixType = double;
 
-int main(int, char**) {
-  constexpr size_t size = 5;
+int main(int, char **) {
+  constexpr size_t size = 10;
+  constexpr size_t blockSize = 3;
   MatrixType matrixMem[size * size];
   MatrixType resultMem[size * size];
 
-  generateRandomCholeskyMatrix(size, matrixMem, resultMem);
+  auto matrix = std::make_shared<MatrixData<MatrixType>>(size, size, blockSize,
+                                                         matrixMem);
+  auto expected = std::make_shared<MatrixData<MatrixType>>(size, size, blockSize,
+                                                           resultMem);
 
-  auto matrix = std::make_shared<MatrixData<MatrixType>>(size, size, 1,
-      matrixMem);
-  auto expected = std::make_shared<MatrixData<MatrixType>>(size, size, 1,
-      resultMem);
+  generateRandomCholeskyMatrix(matrix, expected);
 
   std::cout << "matrix:" << std::endl;
   std::cout << *matrix << std::endl;
+  std::cout << "expected:" << std::endl;
+  std::cout << *expected << std::endl;
 
   CholeskyDecompositionGraph<MatrixType> choleskyGraph;
   choleskyGraph.executeGraph();
