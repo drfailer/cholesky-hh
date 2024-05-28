@@ -17,11 +17,9 @@ public:
 
   void execute(std::shared_ptr<MatrixBlockData<T, Block>> block) override {
     size_t iBegin = block->y() * block->blockSize();
-    size_t iEnd = iBegin + std::min(block->blockSize(),
-                                    block->matrixHeight() - block->y());
+    size_t iEnd = std::min(iBegin + block->blockSize(), block->matrixHeight());
     size_t jBegin = block->x() * block->blockSize();
-    size_t jEnd = jBegin + std::min(block->blockSize(),
-                                    block->matrixWidth() - block->x());
+    size_t jEnd = std::min(jBegin + block->blockSize(), block->matrixWidth());
 
     for (size_t i = iBegin; i < iEnd; ++i) {
       for (size_t j = jBegin; j < jEnd; ++j) {
