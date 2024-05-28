@@ -5,10 +5,13 @@
 #include "../data/matrix_data.h"
 #include "../state/decompose_state.h"
 #include "../state/decompose_state_manager.h"
+#include "../state/update_submatrix_state.h"
+#include "../state/update_submatrix_state_manager.h"
 #include "../task/decompose_block_task.h"
 #include "../task/split_matrix_task.h"
 #include "../task/compute_diagonal_block_task.h"
 #include "../task/compute_column_block_task.h"
+#include "../task/update_submatrix_block_task.h"
 #include <hedgehog/hedgehog.h>
 
 #define CDGraphInNb 1
@@ -23,16 +26,18 @@ class CholeskyDecompositionGraph
           : hh::Graph<CDGraphInNb, CDGraphIn, CDGraphOut >(
           "Cholesky Decomposition") {
     auto splitMatrixTask = std::make_shared<SplitMatrixTask<T, Block>>();
-    auto decomposeBlockTask = std::make_shared<DecomposeBlockTask<T>>(1);
+//    auto decomposeBlockTask = std::make_shared<DecomposeBlockTask<T>>(1);
     auto decomposeState = std::make_shared<DecomposeState<T>>();
     auto decomposeStateManager = std::make_shared<DecomposeStateManager<T>>(decomposeState);
-    auto computeDiagonalBlock = std::make_shared<ComputeDiagonalBlockTask<T>>(1);
-    auto computeColumnBlock = std::make_shared<ComputeColumnBlockTask<T>>(1);
+    auto computeDiagonalBlockTask = std::make_shared<ComputeDiagonalBlockTask<T>>(1);
+    auto computeColumnBlockTask = std::make_shared<ComputeColumnBlockTask<T>>(1);
+    auto updateSubMatrixBlockTask = std::make_shared<UpdateSubMatrixBlockTask<T>>(1);
+    auto updateSubMatrixState = std::make_shared<UpdateSubMatrixState<T>>();
+    auto updateSubMatrixStateManager = std::make_shared<UpdateSubMatrixStateManager<T>>(
+            updateSubMatrixState);
 
     this->inputs(splitMatrixTask);
     this->edges(splitMatrixTask, decomposeStateManager);
-    this->edges(decomposeStateManager, decomposeBlockTask);
-    this->edges(decomposeBlockTask, decomposeStateManager);
     this->outputs(decomposeStateManager);
   }
 };

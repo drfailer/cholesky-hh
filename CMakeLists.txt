@@ -37,6 +37,9 @@ set(cholesky_hh_files
         src/task/compute_diagonal_block_task.h
 		src/task/compute_column_block_task.h
 		src/task/update_submatrix_block_task.h
+		src/state/update_submatrix_state.h
+		src/data/triple_block_data.h
+		src/state/update_submatrix_state_manager.h
 )
 
 # executable

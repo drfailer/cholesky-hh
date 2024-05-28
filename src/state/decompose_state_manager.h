@@ -7,9 +7,9 @@ template <typename T>
 class DecomposeStateManager
     : public hh::StateManager<DStateInNb, DStateIn, DStateOut> {
 public:
-  DecomposeStateManager(std::shared_ptr<DecomposeState<T>> const &state)
+  explicit DecomposeStateManager(std::shared_ptr<DecomposeState<T>> const &state)
       : hh::StateManager<DStateInNb, DStateIn, DStateOut>(
-            state, "Decompose state manager") {}
+            state, "Decompose State Manager") {}
 
     [[nodiscard]] bool canTerminate() const override {
         this->state()->lock();

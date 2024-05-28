@@ -2,10 +2,10 @@
 #define BLOCK_TYPE_H
 
 enum BlockTypes {
-  Origin,  // block from A
-  Block,   // non treated block from L
-  Diagonal,  // block from A
-  Result,  // result block from L
+  Block,    // generic block
+  Diagonal, // diagonal block
+  Result,   // final result block
+  Updated,  // block that has been updated by the UpdateSubMatrix task
 };
 
 #endif
