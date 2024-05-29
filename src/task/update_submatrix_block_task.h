@@ -22,12 +22,15 @@ class UpdateSubMatrixBlockTask : public hh::AbstractTask<USBTaskInNb, USBTaskIn,
 
   void execute(std::shared_ptr<UpdateSubmatrixBlockInputType<T>> blocks) override {
     auto L1Block = blocks->first;
-    auto L2Block = blocks->first;
-    auto ABlock = blocks->second;
+    auto L2Block = blocks->second;
+    auto ABlock = blocks->third;
     // todo: the leading dimension should be configurable
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, L1Block->blockSize(),
-                L1Block->blockSize(), ABlock->blockSize(), -1.0, L1Block->get(), L1Block->matrixWidth(), L2Block->get(),
+                L1Block->blockSize(), ABlock->blockSize(), -1.0, L1Block->get(),
+                L1Block->matrixWidth(), L2Block->get(),
                 L2Block->matrixWidth(), 1.0, ABlock->get(), ABlock->matrixWidth());
+    ABlock->incRank();
+    std::cout << "Update task: " << ABlock->x() << ", " << ABlock->y() << " - " << ABlock->rank() << std::endl;
     this->addResult(std::make_shared<MatrixBlockData<T, Updated>>(ABlock));
   }
 
