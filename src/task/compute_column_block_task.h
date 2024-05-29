@@ -20,6 +20,8 @@ class ComputeColumnBlockTask : public hh::AbstractTask<CCBTaskInNb, CCBTaskIn, C
   explicit ComputeColumnBlockTask(size_t nbThreads) : hh::AbstractTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut >(
           "Compute Column Block Task", nbThreads) {}
 
+  /// @brief Receives a pair of blocks. The first block is a the diagonal element on the column and
+  /// the second block is the one that will be updated $(colB = colB(diagB^T)^{-1})$.
   void execute(std::shared_ptr<CCBTaskInputType<T>> blocks) override {
     auto diagBlock = blocks->first;
     auto colBlock = blocks->second;

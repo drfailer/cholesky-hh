@@ -15,6 +15,7 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
   UpdateSubMatrixState() :
           hh::AbstractState<USMStateInNb, USMStateIn, USMStateOut >() {}
 
+  /// @brief Receives the blocks from the SplitMatrix task and store them.
   void execute(std::shared_ptr<MatrixBlockData<T, Block>> block) override {
     // special case for the first block received (may change as we can also give the information threw constructor)
     if (blocks_.size() == 0) {
@@ -26,6 +27,8 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
     blocks_[block->y() * block->nbBlocksCols() + block->x()] = block;
   }
 
+  /// @brief Receives result blocks from the ComputeColumn task. This blocks are used to update the
+  /// rest of the matrix in the UpdateBlocks task.
   void execute(std::shared_ptr<MatrixBlockData<T, Result>> block) override {
     // compute the diagonal block
     this->addResult(std::make_shared<TripleBlockData<T>>(block, block,

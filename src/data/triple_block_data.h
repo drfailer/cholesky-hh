@@ -3,6 +3,7 @@
 
 #include "./matrix_block_data.h"
 
+/// @brief Container that is used to send data to the update task.
 template<typename T>
 struct TripleBlockData {
   TripleBlockData(std::shared_ptr<MatrixBlockData<T, Result>> first,

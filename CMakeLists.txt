@@ -19,22 +19,21 @@ find_package(OpenBLAS QUIET)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${Hedgehog_CXX_FLAGS})
 
 if (NOT MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -pedantic -g")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -Wuninitialized -pedantic -g")
 endif (NOT MSVC)
 
 # files
 set(cholesky_hh_files
-    src/main.cc
-    src/state/decompose_state.h
-    src/state/decompose_state_manager.h
-    src/graph/cholesky_decomposition_graph.h
-    src/data/matrix_data.h
-    src/data/matrix_block_data.h
-    src/data/block_types.h
-    src/task/split_matrix_task.h
-    src/task/decompose_block_task.h
-    src/utils.h
-        src/task/compute_diagonal_block_task.h
+		src/main.cc
+		src/state/decompose_state.h
+		src/state/decompose_state_manager.h
+		src/graph/cholesky_decomposition_graph.h
+		src/data/matrix_data.h
+		src/data/matrix_block_data.h
+		src/data/block_types.h
+		src/task/split_matrix_task.h
+		src/utils.h
+		src/task/compute_diagonal_block_task.h
 		src/task/compute_column_block_task.h
 		src/task/update_submatrix_block_task.h
 		src/state/update_submatrix_state.h
