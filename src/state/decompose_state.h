@@ -4,84 +4,87 @@
 #include "../data/matrix_block_data.h"
 #include "../task/compute_column_block_task.h"
 #include <hedgehog/hedgehog.h>
-#include <list>
+#include <vector>
 
 #define DStateInNb 3
 #define DStateIn MatrixBlockData<T, Block>, MatrixBlockData<T, Result>, MatrixBlockData<T, Updated>
 #define DStateOut MatrixBlockData<T, Diagonal>, CCBTaskInputType<T>, MatrixBlockData<T, Result>
 
 template<typename T>
-class DecomposeState
-        : public hh::AbstractState<DStateInNb, DStateIn, DStateOut > {
+class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut > {
  public:
   explicit DecomposeState() : hh::AbstractState<DStateInNb, DStateIn, DStateOut >() {}
 
   void execute(std::shared_ptr<MatrixBlockData<T, Block>> block) override {
-    blocks_.push_back(block);
-    if (block->x() == colIndex_ && block->y() == colIndex_) {
-      // we treat the first element
-      nbElementsCol_ = block->nbBlocksRows() - colIndex_;
-      currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(block);
-      this->addResult(currentDiagonalBlock_);
-    } else if (currentDiagonalBlock_ != nullptr && block->x() == colIndex_) {
-      // this is the case where we still receive data from the split task and
-      // we already have treated the first element.
-      this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, block));
+    std::cout << "decompose state => Block" << std::endl;
+    // todo: should be done in the constructor
+    if (blocks_.size() == 0) {
+      init(block->nbBlocksRows(), block->nbBlocksCols());
+    }
+
+    blocks_[block->y() * nbBlocksRows_ + block->x()] = block;
+    if (block->x() == block->rank()) {
+      if (block->y() == block->rank()) {
+        this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
+      } else if (currentDiagonalBlock_ != nullptr && currentDiagonalBlock_->x() == block->x()) {
+        this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, block));
+      }
     }
   }
 
-  void execute(std::shared_ptr<MatrixBlockData<T, Updated>>) override {
-    // todo: this one will be used for optimization
+  void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
+    std::cout << "decompose state => Updated" << std::endl;
+    std::cout << "Updated: " << block->x() << ", " << block->y() << " - " << block->rank() << std::endl;
+
+    if (block->x() == block->rank()) {
+      if (block->y() == block->rank()) {
+        std::cout << "Updated => new diag: " << block->x() << std::endl;
+        this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
+      } else if (currentDiagonalBlock_ && currentDiagonalBlock_->x() == block->x()) {
+        this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_,
+                                                              std::make_shared<MatrixBlockData<T, Block>>(
+                                                                      block)));
+      }
+    }
   }
 
   void execute(std::shared_ptr<MatrixBlockData<T, Result>> block) override {
-    // TODO: find a way to clearly detect when we can send the blocks instead of
-    // just waiting for the diagonal element
-    --nbElementsCol_;
-    removeBlock(block);
+    std::cout << "decompose state => Result" << std::endl;
+    std::cout << "Result: " << block->x() << ", " << block->y() << " - " << block->rank() << std::endl;
 
     if (block->x() == block->y()) {
-      // the diagonal element is ready so we can send all the elements beneath
-      // on the column
-      for (auto resultBlock: blocks_) {
-        if (resultBlock->x() == block->x()) {
-          this->addResult(
-                  std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, resultBlock));
+      std::cout << "decompose state => diag ready" << std::endl;
+      currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(block);
+      // the diagonal element is ready so we can send all the elements beneath on the column
+      for (size_t i = block->y() + 1; i < nbBlocksRows_; ++i) {
+        auto blk = blocks_[i * nbBlocksRows_ + block->x()];
+        if (blk && blk->rank() == currentDiagonalBlock_->x()) {
+          std::cout << "sending: " << blk->x() << ", " << blk->y() << std::endl;
+          this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, blk));
         }
       }
-    } else if (nbElementsCol_ == 0) {
-      // all the elements on the column are processed
-      ++colIndex_;
-      nbElementsCol_ = block->nbBlocksRows() - colIndex_;
-      auto diagElt =
-              std::find_if(blocks_.begin(), blocks_.end(), [this](auto rb) {
-                return rb->x() == colIndex_ && rb->y() == colIndex_;
-              });
-      currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(*diagElt);
-      this->addResult(currentDiagonalBlock_);
+      ++colIdx_;
     }
-    this->addResult(block); // result block
+    this->addResult(block); // return result block
   }
 
-  template<BlockTypes BlockType>
-  void removeBlock(std::shared_ptr<MatrixBlockData<T, BlockType>> block) {
-    auto pos = std::find_if(blocks_.begin(), blocks_.end(), [&](auto rb) {
-      return rb->x() == block->x() && rb->y() == block->y();
-    });
-    if (pos != blocks_.end()) {
-      blocks_.erase(pos);
-    }
+  [[nodiscard]] bool isDone() const {
+    return currentDiagonalBlock_ && colIdx_ >= nbBlocksCols_;
   }
-
-  [[nodiscard]] bool isDone() const { return colIndex_ > 0 && blocks_.size() == 0; }
 
  private:
-  // TODO: change the list to something more efficient for this problem (for
-  // optimized version)
-  std::list<std::shared_ptr<MatrixBlockData<T, Block>>> blocks_ = {};
+  std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> blocks_ = {};
   std::shared_ptr<MatrixBlockData<T, Diagonal>> currentDiagonalBlock_ = nullptr;
-  size_t colIndex_ = 0;
-  size_t nbElementsCol_ = 0;
+  size_t nbBlocksRows_ = 0;
+  size_t nbBlocksCols_ = 0;
+  size_t colIdx_ = 0;
+
+  void init(size_t nbBlocksRows, size_t nbBlocksCols) {
+    nbBlocksRows_ = nbBlocksRows;
+    nbBlocksCols_ = nbBlocksCols;
+    blocks_ = std::vector<std::shared_ptr<MatrixBlockData<T, Block>>>(
+            nbBlocksRows_ * nbBlocksCols_, nullptr);
+  }
 };
 
 #endif

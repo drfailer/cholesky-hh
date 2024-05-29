@@ -17,7 +17,6 @@ public:
         this->state()->unlock();
         return ret;
     }
-
 };
 
 #endif
