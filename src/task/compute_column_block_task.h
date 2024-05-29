@@ -28,6 +28,7 @@ class ComputeColumnBlockTask : public hh::AbstractTask<CCBTaskInNb, CCBTaskIn, C
                 CblasNoTrans, CblasNonUnit, diagBlock->blockSize(), diagBlock->blockSize(), 1.0,
                 diagBlock->get(), diagBlock->matrixWidth(), colBlock->get(),
                 colBlock->matrixWidth());
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(colBlock));
   }
 
   std::shared_ptr<hh::AbstractTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut>> copy() override {
