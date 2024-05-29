@@ -33,6 +33,8 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
   }
 
   void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
+    block->incRank();
+    blocks_[block->y() * nbBlocksRows_ + block->x()]->incRank();
     std::cout << "decompose state => Updated" << std::endl;
     std::cout << "Updated: " << block->x() << ", " << block->y() << " - " << block->rank() << std::endl;
 
@@ -41,6 +43,7 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
         std::cout << "Updated => new diag: " << block->x() << std::endl;
         this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
       } else if (currentDiagonalBlock_ && currentDiagonalBlock_->x() == block->x()) {
+        std::cout << "sending: " << block->x() << ", " << block->y() << std::endl;
         this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_,
                                                               std::make_shared<MatrixBlockData<T, Block>>(
                                                                       block)));
@@ -55,7 +58,7 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
     if (block->x() == block->y()) {
       std::cout << "decompose state => diag ready" << std::endl;
       currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(block);
-      // the diagonal element is ready so we can send all the elements beneath on the column
+      // the diagonal element is ready, so we can send all the elements beneath on the column
       for (size_t i = block->y() + 1; i < nbBlocksRows_; ++i) {
         auto blk = blocks_[i * nbBlocksRows_ + block->x()];
         if (blk && blk->rank() == currentDiagonalBlock_->x()) {
