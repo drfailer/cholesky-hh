@@ -39,8 +39,8 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
                          ? resultBlock->y() * block->nbBlocksCols() + block->y()
                          : block->y() * block->nbBlocksCols() + resultBlock->y();
       this->addResult(std::make_shared<TripleBlockData<T>>(block, resultBlock, blocks_[updateIdx]));
-      --nbBlocksCurrentCol_;
     }
+    resultBlocks_.push_back(block);
     if (nbBlocksCurrentCol_ == 0) {
       nbBlocksCurrentCol_ = --nbCols_;
       resultBlocks_.clear();
