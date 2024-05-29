@@ -24,8 +24,8 @@ class ComputeColumnBlockTask : public hh::AbstractTask<CCBTaskInNb, CCBTaskIn, C
     auto diagBlock = blocks->first;
     auto colBlock = blocks->second;
     // todo: leading dimension should be configurable
-    cblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower,
-                CblasNoTrans, CblasNonUnit, diagBlock->blockSize(), diagBlock->blockSize(), 1.0,
+    cblas_dtrsm(CblasRowMajor, CblasRight, CblasLower,
+                CblasTrans, CblasNonUnit, diagBlock->blockSize(), diagBlock->blockSize(), 1.0,
                 diagBlock->get(), diagBlock->matrixWidth(), colBlock->get(),
                 colBlock->matrixWidth());
     this->addResult(std::make_shared<MatrixBlockData<T, Result>>(colBlock));

@@ -22,7 +22,7 @@ class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn,
     // todo: leading dimension should be configurable
     int32_t lda = block->matrixWidth();
     int32_t info = 0;
-    LAPACK_dpotf2("L", &n, block->get(), &lda, &info);
+    LAPACK_dpotf2("U", &n, block->get(), &lda, &info);
     this->addResult(std::make_shared<MatrixBlockData<T, Result>>(block));
   }
 
