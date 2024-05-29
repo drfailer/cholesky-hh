@@ -18,11 +18,11 @@ class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn,
                                                                       nbThreads) {}
 
   void execute(std::shared_ptr<MatrixBlockData<T, Diagonal>> block) override {
-    int32_t n = block->blockSize();
+    int32_t n = std::min(block->blockSize(), block->matrixWidth() - block->x());
     // todo: leading dimension should be configurable
     int32_t lda = block->matrixWidth();
     int32_t info = 0;
-     LAPACK_dpotf2("U", &n, block->get(), &lda, &info);
+    LAPACK_dpotf2("U", &n, block->get(), &lda, &info);
     this->addResult(std::make_shared<MatrixBlockData<T, Result>>(block));
   }
 
