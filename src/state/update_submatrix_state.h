@@ -37,16 +37,19 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
                                                                  block->y()]));
     --nbBlocksCurrentCol_;
     // compute the other blocks
-    for (auto resultBlock: resultBlocks_) {
-      size_t updateIdx = resultBlock->y() > block->y()
-                         ? resultBlock->y() * block->nbBlocksCols() + block->y()
-                         : block->y() * block->nbBlocksCols() + resultBlock->y();
-      this->addResult(std::make_shared<TripleBlockData<T>>(block, resultBlock, blocks_[updateIdx]));
+    for (auto colBlock: currentColumnBlocks_) {
+      if (colBlock->y() > block->y()) {
+        size_t updateIdx = colBlock->y() * block->nbBlocksCols() + block->y();
+        this->addResult(std::make_shared<TripleBlockData<T>>(colBlock, block, blocks_[updateIdx]));
+      } else {
+        size_t updateIdx = block->y() * block->nbBlocksCols() + colBlock->y();
+        this->addResult(std::make_shared<TripleBlockData<T>>(block, colBlock, blocks_[updateIdx]));
+      }
     }
-    resultBlocks_.push_back(block);
+    currentColumnBlocks_.push_back(block);
     if (nbBlocksCurrentCol_ == 0) {
       nbBlocksCurrentCol_ = --nbCols_;
-      resultBlocks_.clear();
+      currentColumnBlocks_.clear();
     }
   }
 
@@ -55,7 +58,7 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
   }
 
  private:
-  std::vector<std::shared_ptr<MatrixBlockData<T, Result>>> resultBlocks_ = {};
+  std::vector<std::shared_ptr<MatrixBlockData<T, Result>>> currentColumnBlocks_ = {};
   std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> blocks_ = {};
   size_t nbCols_ = 1;
   size_t nbBlocksCurrentCol_ = 1;
