@@ -37,6 +37,7 @@ public:
 
   [[nodiscard]] size_t rank() const { return rank_; }
   void incRank() { ++rank_; }
+  void rank(size_t rank) { rank_ = rank; }
 
 //  [[nodiscard]] bool isReady() const { return isReady_; }
 //  void isReady(bool isReady) { isReady_ = isReady; }
