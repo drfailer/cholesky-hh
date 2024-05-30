@@ -23,33 +23,25 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
               block->nbBlocksCols() * block->nbBlocksRows(), nullptr);
       nbCols_ = block->nbBlocksCols() - 1;
       nbBlocksCurrentCol_ = nbCols_;
+      blocksTtl_ = (block->nbBlocksCols() * (block->nbBlocksCols() + 1)) / 2;
     }
+    --blocksTtl_;
     blocks_[block->y() * block->nbBlocksCols() + block->x()] = block;
+
+    if (blocksTtl_ == 0) {
+      for (auto unprocessedBlock : unprocessedColumnBlocks) {
+        update(unprocessedBlock);
+      }
+    }
   }
 
   /// @brief Receives result blocks from the ComputeColumn task. This blocks are used to update the
   /// rest of the matrix in the UpdateBlocks task.
   void execute(std::shared_ptr<MatrixBlockData<T, Result>> block) override {
-    // compute the diagonal block
-    this->addResult(std::make_shared<TripleBlockData<T>>(block, block,
-                                                         blocks_[block->y() *
-                                                                 block->nbBlocksCols() +
-                                                                 block->y()]));
-    --nbBlocksCurrentCol_;
-    // compute the other blocks
-    for (auto colBlock: currentColumnBlocks_) {
-      if (colBlock->y() > block->y()) {
-        size_t updateIdx = colBlock->y() * block->nbBlocksCols() + block->y();
-        this->addResult(std::make_shared<TripleBlockData<T>>(colBlock, block, blocks_[updateIdx]));
-      } else {
-        size_t updateIdx = block->y() * block->nbBlocksCols() + colBlock->y();
-        this->addResult(std::make_shared<TripleBlockData<T>>(block, colBlock, blocks_[updateIdx]));
-      }
-    }
-    currentColumnBlocks_.push_back(block);
-    if (nbBlocksCurrentCol_ == 0) {
-      nbBlocksCurrentCol_ = --nbCols_;
-      currentColumnBlocks_.clear();
+    if (blocksTtl_ == 0) { // security in the case where all the blocks are not received
+      update(block);
+    } else {
+      unprocessedColumnBlocks.push_back(block);
     }
   }
 
@@ -58,10 +50,34 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
   }
 
  private:
-  std::vector<std::shared_ptr<MatrixBlockData<T, Result>>> currentColumnBlocks_ = {};
+  std::vector<std::shared_ptr<MatrixBlockData<T, Result>>> columnBlocks_ = {};
+  std::vector<std::shared_ptr<MatrixBlockData<T, Result>>> unprocessedColumnBlocks = {};
   std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> blocks_ = {};
   size_t nbCols_ = 1;
   size_t nbBlocksCurrentCol_ = 1;
+  size_t blocksTtl_ = 0;
+
+  void update(std::shared_ptr<MatrixBlockData<T, Result>> block) {
+    // update the diagonal block
+    size_t updateIdx = block->y() * block->nbBlocksCols() + block->y();
+    this->addResult(std::make_shared<TripleBlockData<T>>(block, block, blocks_[updateIdx]));
+    --nbBlocksCurrentCol_;
+    // update the other blocks
+    for (auto colBlock: columnBlocks_) {
+      if (colBlock->y() > block->y()) {
+        updateIdx = colBlock->y() * block->nbBlocksCols() + block->y();
+        this->addResult(std::make_shared<TripleBlockData<T>>(colBlock, block, blocks_[updateIdx]));
+      } else {
+        updateIdx = block->y() * block->nbBlocksCols() + colBlock->y();
+        this->addResult(std::make_shared<TripleBlockData<T>>(block, colBlock, blocks_[updateIdx]));
+      }
+    }
+    columnBlocks_.push_back(block);
+    if (nbBlocksCurrentCol_ == 0) {
+      nbBlocksCurrentCol_ = --nbCols_;
+      columnBlocks_.clear();
+    }
+  }
 };
 
 #endif //CHOLESKY_HH_UPDATE_SUBMATRIX_STATE_H
