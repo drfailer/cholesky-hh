@@ -26,13 +26,10 @@ class ComputeColumnBlockTask : public hh::AbstractTask<CCBTaskInNb, CCBTaskIn, C
   void execute(std::shared_ptr<CCBTaskInputType<T>> blocks) override {
     auto diagBlock = blocks->first;
     auto colBlock = blocks->second;
-    size_t blockHeight = std::min(colBlock->blockSize(), colBlock->matrixHeight() - colBlock->y());
-    size_t blockWidth = std::min(colBlock->blockSize(), colBlock->matrixWidth() - colBlock->x());
     // todo: leading dimension should be configurable
-    cblas_dtrsm(CblasRowMajor, CblasRight, CblasLower,
-                CblasTrans, CblasNonUnit, blockHeight, blockWidth, 1.0,
-                diagBlock->get(), diagBlock->matrixWidth(), colBlock->get(),
-                colBlock->matrixWidth());
+    cblas_dtrsm(CblasRowMajor, CblasRight, CblasLower, CblasTrans, CblasNonUnit,
+                colBlock->height(), colBlock->width(), 1.0, diagBlock->get(),
+                diagBlock->matrixWidth(), colBlock->get(), colBlock->matrixWidth());
     this->addResult(std::make_shared<MatrixBlockData<T, Result>>(colBlock));
   }
 

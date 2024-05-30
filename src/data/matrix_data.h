@@ -18,11 +18,9 @@ class MatrixData {
   [[nodiscard]] size_t blockSize() const { return blockSize_; }
 
   [[nodiscard]] size_t nbBlocksRows() const { return nbBlocksRows_; }
-
   [[nodiscard]] size_t nbBlocksCols() const { return nbBlocksCols_; }
 
   [[nodiscard]] size_t width() const { return width_; }
-
   [[nodiscard]] size_t height() const { return height_; }
 
   [[nodiscard]] T *get() { return ptr_; }

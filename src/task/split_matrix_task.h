@@ -21,7 +21,9 @@ class SplitMatrixTask
     for (size_t iBlock = 0; iBlock < matrix->nbBlocksRows(); ++iBlock) {
       for (size_t jBlock = 0; jBlock <= iBlock; ++jBlock) {
         this->addResult(std::make_shared<MatrixBlockData<T, BlockType>>(
-                matrix->blockSize(), matrix->nbBlocksRows(), matrix->nbBlocksCols(),
+                std::min(matrix->blockSize(), matrix->width() - (jBlock * matrix->blockSize())),
+                std::min(matrix->blockSize(), matrix->height() - (iBlock * matrix->blockSize())),
+                matrix->nbBlocksRows(), matrix->nbBlocksCols(),
                 jBlock, iBlock, matrix->width(), matrix->height(),
                 matrix->get() + iBlock * matrix->blockSize() * matrix->width() +
                 jBlock * matrix->blockSize(), matrix->get()));

@@ -26,9 +26,9 @@ class UpdateSubMatrixBlockTask : public hh::AbstractTask<USBTaskInNb, USBTaskIn,
     auto colBlock1 = blocks->first;
     auto colBlock2 = blocks->second;
     auto updatedBlock = blocks->third;
-    size_t m = std::min(colBlock1->blockSize(), colBlock1->matrixHeight() - colBlock1->y());
-    size_t n = std::min(colBlock2->blockSize(), colBlock2->matrixWidth() - colBlock2->x());
-    size_t k = std::min(colBlock2->blockSize(), colBlock2->matrixHeight() - colBlock2->y());
+    size_t m = updatedBlock->height();
+    size_t n = updatedBlock->width();
+    size_t k = colBlock1->width();
     // todo: the leading dimension should be configurable
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, m, n, k, -1.0, colBlock1->get(),
                 colBlock1->matrixWidth(), colBlock2->get(), colBlock2->matrixWidth(), 1.0,
