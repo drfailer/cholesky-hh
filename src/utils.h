@@ -19,26 +19,14 @@
 /*                              generate problem                              */
 /******************************************************************************/
 
-template<typename T>
-void cpyTranspose(std::shared_ptr<MatrixData<T>> dest,
-                  std::shared_ptr<MatrixData<T>> src) {
-  for (size_t i = 0; i < src->height(); ++i) {
-    for (size_t j = 0; j <= i; ++j) {
-      dest->get()[j * src->width() + i] = src->get()[i * src->width() + j];
-    }
-  }
-}
-
 /// @brief Compute A = L * LT
 template<typename T>
-void matrixDotProduct(std::shared_ptr<MatrixData<T>> L,
-                      std::shared_ptr<MatrixData<T>> LT,
-                      std::shared_ptr<MatrixData<T>> A) {
+void matrixDotProduct(std::shared_ptr<MatrixData<T>> L, std::shared_ptr<MatrixData<T>> A) {
   for (size_t i = 0; i < L->height(); ++i) {
     for (size_t j = 0; j < L->width(); ++j) {
-      for (size_t k = 0; k < LT->height(); ++k) {
+      for (size_t k = 0; k < L->height(); ++k) {
         A->get()[i * A->width() + j] +=
-                L->get()[i * L->width() + k] * LT->get()[k * LT->width() + j];
+                L->get()[i * L->width() + k] * L->get()[j * L->width() + k];
       }
     }
   }
@@ -65,8 +53,7 @@ void generateRandomCholeskyMatrix(std::shared_ptr<MatrixData<T>> matrix,
 
   T *resultTMem = new T[matrix->height() * matrix->width()];
   auto resultT = std::make_shared<MatrixData<T>>(matrix->height(), matrix->width(), 1, resultTMem);
-  cpyTranspose(resultT, result);
-  matrixDotProduct(result, resultT, matrix);
+  matrixDotProduct(result, matrix);
   delete[] resultTMem;
 }
 

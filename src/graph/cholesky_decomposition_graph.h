@@ -26,7 +26,7 @@ class CholeskyDecompositionGraph
     auto splitMatrixTask = std::make_shared<SplitMatrixTask<T, Block>>();
     auto decomposeState = std::make_shared<DecomposeState<T>>();
     auto decomposeStateManager = std::make_shared<DecomposeStateManager<T>>(decomposeState);
-    auto computeDiagonalBlockTask = std::make_shared<ComputeDiagonalBlockTask<T>>(3);
+    auto computeDiagonalBlockTask = std::make_shared<ComputeDiagonalBlockTask<T>>(1);
     auto computeColumnBlockTask = std::make_shared<ComputeColumnBlockTask<T>>(3);
     auto updateSubMatrixBlockTask = std::make_shared<UpdateSubMatrixBlockTask<T>>(3);
     auto updateSubMatrixState = std::make_shared<UpdateSubMatrixState<T>>();
