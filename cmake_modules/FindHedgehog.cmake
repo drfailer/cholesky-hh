@@ -44,7 +44,7 @@ SET(Hedgehog_FOUND ON)
 FIND_PATH(Hedgehog_INCLUDE_DIR hedgehog.h
         /usr/include/hedgehog
         /usr/local/include/hedgehog
-)
+        )
 
 find_package(Threads REQUIRED)
 link_libraries(Threads::Threads)
