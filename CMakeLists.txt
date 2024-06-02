@@ -10,6 +10,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_mo
 
 set(Hedgehog_INCLUDE_DIR lib/hedgehog/)
 
+include_directories(lib/)
+
 # Need to defined variable Hedgehog_INCLUDE_DIR to the hedgehog path hedgehog
 find_package(Hedgehog REQUIRED)
 
@@ -40,6 +42,7 @@ set(cholesky_hh_files
 		src/state/update_submatrix_state.h
 		src/data/triple_block_data.h
 		src/state/update_submatrix_state_manager.h
+    src/config.cc src/config.h
 )
 
 # executable
