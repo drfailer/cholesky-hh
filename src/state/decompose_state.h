@@ -38,7 +38,7 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
   /// @brief Receives the updated blocks from the UpdateBlocks task. When all the blocks are
   /// updated, we start a new column.
   /// todo: we can optimize here by sending the next diagonal element early.
-  void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
+  void execute(std::shared_ptr<MatrixBlockData<T, Updated>>) override {
     --updatedBlocksCounter_;
 
     if (updatedBlocksCounter_ == 0) {
