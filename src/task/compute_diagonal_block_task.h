@@ -13,9 +13,8 @@
 template<typename T>
 class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut > {
  public:
-  explicit ComputeDiagonalBlockTask(size_t nbThreads) :
-          hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut >("Compute Diagonal Block Task",
-                                                                      nbThreads) {}
+  explicit ComputeDiagonalBlockTask() :
+          hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut >("Compute Diagonal Block Task", 1) {}
 
   void execute(std::shared_ptr<MatrixBlockData<T, Diagonal>> block) override {
     int32_t n = block->height();
@@ -27,7 +26,7 @@ class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn,
   }
 
   std::shared_ptr<hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut>> copy() override {
-    return std::make_shared<ComputeDiagonalBlockTask<T>>(this->numberThreads());
+    return std::make_shared<ComputeDiagonalBlockTask<T>>();
   }
 };
 
