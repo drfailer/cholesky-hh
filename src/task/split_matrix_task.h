@@ -1,9 +1,10 @@
 #ifndef SPLIT_MATRIX_TASK_H
 #define SPLIT_MATRIX_TASK_H
 
+#include <hedgehog/hedgehog.h>
+#include <memory>
 #include "../data/matrix_block_data.h"
 #include "../data/matrix_data.h"
-#include <hedgehog/hedgehog.h>
 
 #define SMTaskInNb 1
 #define SMTaskIn MatrixData<T>

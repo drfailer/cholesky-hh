@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
-set(Hedgehog_INCLUDE_DIR ./lib/hedgehog/)
+set(Hedgehog_INCLUDE_DIR lib/hedgehog/)
 
 # Need to defined variable Hedgehog_INCLUDE_DIR to the hedgehog path hedgehog
 find_package(Hedgehog REQUIRED)

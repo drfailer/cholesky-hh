@@ -4,6 +4,7 @@
 #include "block_types.h"
 #include <cmath>
 #include <cstddef>
+#include <memory>
 #include <hedgehog/hedgehog.h>
 
 template<typename T, BlockTypes BlockType>
