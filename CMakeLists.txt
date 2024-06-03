@@ -10,7 +10,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_mo
 
 set(Hedgehog_INCLUDE_DIR lib/hedgehog/)
 
-include_directories(lib/)
+include_directories(lib/ /home/rvc1/Documents/dev/lib/include/)
+link_directories(/home/rvc1/Documents/dev/lib/lib/)
 
 # Need to defined variable Hedgehog_INCLUDE_DIR to the hedgehog path hedgehog
 find_package(Hedgehog REQUIRED)
@@ -21,8 +22,10 @@ find_package(OpenBLAS QUIET)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${Hedgehog_CXX_FLAGS})
 
 if (NOT MSVC)
-#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -Wextra -Werror -Wuninitialized -pedantic -g")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -Wuninitialized -pedantic -g")
+	# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -Wextra -Werror -Wuninitialized -pedantic -g")
+	# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -Wuninitialized -pedantic -g")
+	# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -Wuninitialized -pedantic -O2")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -Wuninitialized -pedantic -O3")
 endif (NOT MSVC)
 
 # files
@@ -47,4 +50,4 @@ set(cholesky_hh_files
 
 # executable
 add_executable(cholesky-hh ${cholesky_hh_files})
-target_link_libraries(cholesky-hh openblas cblas)
+target_link_libraries(cholesky-hh openblas)

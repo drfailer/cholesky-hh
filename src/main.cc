@@ -1,6 +1,7 @@
 #include "graph/cholesky_decomposition_graph.h"
 #include "utils.h"
 #include "config.h"
+#include <cblas.h>
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -13,6 +14,9 @@ std::pair<std::shared_ptr<MatrixData<T>>, std::shared_ptr<MatrixData<T>>>
 initMatrix(Config const &config) {
   std::ifstream fs(config.inputFile);
   size_t width, height;
+
+  // make openblas using only one thread
+  openblas_set_num_threads(1);
 
   fs >> width >> height;
   auto matrix = std::make_shared<MatrixData<T>>(width, height, config.blockSize, new T[width * height]());

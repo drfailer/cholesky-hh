@@ -2,7 +2,7 @@
 #define CHOLESKY_HH_COMPUTE_DIAGONAL_BLOCK_TASK_H
 
 #include <hedgehog/hedgehog.h>
-#include <f77blas.h>
+#include <lapack.h>
 #include "../data/matrix_block_data.h"
 
 #define CDBTaskInNb 1
@@ -20,7 +20,8 @@ class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn,
     // todo: leading dimension should be configurable
     int32_t lda = block->matrixWidth();
     int32_t info = 0;
-    dpotf2_((char*) "U", &n, block->get(), &lda, &info);
+    LAPACK_dpotf2((char*) "U", &n, block->get(), &lda, &info);
+    /* LAPACK_dpotrf2((char*) "U", &n, block->get(), &lda, &info); */
     this->addResult(std::make_shared<MatrixBlockData<T, Result>>(block));
   }
 
