@@ -30,7 +30,13 @@ initMatrix(Config const &config) {
 }
 
 int main(int argc, char **argv) {
-  Config config;
+  Config config = {
+    .inputFile = "cholesky.in",
+    .blockSize = 10,
+    .nbThreadsComputeColumnTask = 4,
+    .nbThreadsUpdateTask = 4,
+    .print = false
+  };
 
   parseCmdArgs(argc, argv, config);
 
@@ -38,10 +44,10 @@ int main(int argc, char **argv) {
   auto matrix = input.first;
   auto expected = input.second;
 
-  /* std::cout << "matrix:" << std::endl; */
-  /* std::cout << *matrix << std::endl; */
-  /* std::cout << "expected:" << std::endl; */
-  /* std::cout << *expected << std::endl; */
+  if (config.print) {
+    std::cout << "matrix:" << std::endl;
+    std::cout << *matrix << std::endl;
+  }
 
   CholeskyDecompositionGraph<MatrixType> choleskyGraph(config.nbThreadsComputeColumnTask, config.nbThreadsUpdateTask);
   choleskyGraph.executeGraph(true);
@@ -53,16 +59,22 @@ int main(int argc, char **argv) {
   choleskyGraph.waitForTermination();
 
   auto end = std::chrono::system_clock::now();
-  std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin) << std::endl;
+  std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
 
-  /* std::cout << "expected:" << std::endl; */
-  /* std::cout << *expected << std::endl; */
-  /* std::cout << "found:" << std::endl; */
-  /* std::cout << *matrix << std::endl; */
+  if (config.print) {
+    std::cout << "expected:" << std::endl;
+    std::cout << *expected << std::endl;
+    std::cout << "found:" << std::endl;
+    std::cout << *matrix << std::endl;
+  }
 
   choleskyGraph.createDotFile("cholesky-graph.dot", hh::ColorScheme::EXECUTION,
                               hh::StructureOptions::QUEUE);
-  /* assert(verrifySolution(matrix->width(), matrix->get(), expected->get(), 1e-3)); */
+
+  if (!verrifySolution(matrix->width(), matrix->get(), expected->get(), 1e-3)) {
+    std::cout << "ERROR" << std::endl;
+  }
+
   delete[] matrix->get();
   delete[] expected->get();
   return 0;

@@ -7,6 +7,7 @@ struct Config {
   size_t blockSize;
   size_t nbThreadsComputeColumnTask;
   size_t nbThreadsUpdateTask;
+  bool print;
 };
 
 void parseCmdArgs(int argc, char **argv, Config &config);

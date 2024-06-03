@@ -27,12 +27,15 @@ void parseCmdArgs(int argc, char **argv, Config &config) {
     cmd.add(nbThreadsComputeColumnArg);
     TCLAP::ValueArg<size_t> nbThreadsUpdateArg("u", "update", "Number of threads for the update task.", false, 4, &sc);
     cmd.add(nbThreadsUpdateArg);
+    TCLAP::ValueArg<bool> printArg("p", "print", "print", false, false, "bool");
+    cmd.add(printArg);
     cmd.parse(argc, argv);
 
     config.inputFile = inputFileArg.getValue();
     config.blockSize = blockSizeArg.getValue();
     config.nbThreadsComputeColumnTask = nbThreadsComputeColumnArg.getValue();
     config.nbThreadsUpdateTask = nbThreadsUpdateArg.getValue();
+    config.print = printArg.getValue();
   } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
 }
