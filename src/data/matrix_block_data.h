@@ -16,8 +16,8 @@ class MatrixBlockData {
             nbBlocksCols_(nbBlocksCols), x_(x), y_(y), matrixWidth_(matrixWidth),
             matrixHeight_(matrixHeight), ptr_(ptr), fullMatrix_(fullMatrix) {}
 
-  template<typename Other, BlockTypes OtherType>
-  explicit MatrixBlockData(std::shared_ptr<MatrixBlockData<Other, OtherType>> other)
+  template<BlockTypes OtherType>
+  explicit MatrixBlockData(std::shared_ptr<MatrixBlockData<T, OtherType>> &other)
           : MatrixBlockData(other->width(), other->height(), other->nbBlocksRows(),
                             other->nbBlocksCols(), other->x(), other->y(), other->matrixWidth(),
                             other->matrixHeight(), other->get(), other->fullMatrix()) {
