@@ -47,4 +47,4 @@ set(cholesky_hh_files
 
 # executable
 add_executable(cholesky-hh ${cholesky_hh_files})
-target_link_libraries(cholesky-hh openblas lapack)
+target_link_libraries(cholesky-hh openblas)
