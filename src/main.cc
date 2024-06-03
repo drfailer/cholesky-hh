@@ -1,6 +1,7 @@
 #include "graph/cholesky_decomposition_graph.h"
 #include "utils.h"
 #include "config.h"
+#include <iostream>
 #include <fstream>
 #include <chrono>
 #include <memory>

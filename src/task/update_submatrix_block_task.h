@@ -2,7 +2,7 @@
 #define CHOLESKY_HH_UPDATE_SUBMATRIX_BLOCK_TASK_H
 
 #include <hedgehog/hedgehog.h>
-#include <openblas/cblas.h>
+#include <cblas.h>
 #include "../data/matrix_block_data.h"
 #include "../data/triple_block_data.h"
 

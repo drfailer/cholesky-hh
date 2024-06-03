@@ -2,7 +2,7 @@
 #define CHOLESKY_HH_COMPUTE_DIAGONAL_BLOCK_TASK_H
 
 #include <hedgehog/hedgehog.h>
-#include <openblas/f77blas.h>
+#include <f77blas.h>
 #include "../data/matrix_block_data.h"
 
 #define CDBTaskInNb 1
