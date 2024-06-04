@@ -25,27 +25,30 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
       blocksTtl_ = (nbBlocksCols_ * (nbBlocksCols_ + 1)) / 2;
     }
 
-    --blocksTtl_;
     blocks_[block->y() * nbBlocksRows_ + block->x()] = block;
-    if (blocksTtl_ == 0) {
-      size_t n = nbBlocksCols_ - currentColumnIdx_ - 1;
-      updatedBlocksCounter_ = (n * (n + 1)) / 2;
-      this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(
-              blocks_[currentColumnIdx_ * nbBlocksCols_ + currentColumnIdx_]));
+    --blocksTtl_;
+
+    if (block->x() == currentColumnIdx_ && block->y() == currentColumnIdx_) {
+      this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(std::move(block)));
+    }
+
+    if (blocksTtl_ == 0 && currentDiagonalBlock_) {
+      computeColumn();
     }
   }
 
   /// @brief Receives the updated blocks from the UpdateBlocks task. When all the blocks are
   /// updated, we start a new column.
   /// todo: we can optimize here by sending the next diagonal element early.
-  void execute(std::shared_ptr<MatrixBlockData<T, Updated>>) override {
+  void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
     --updatedBlocksCounter_;
 
-    if (updatedBlocksCounter_ == 0) {
-      size_t n = nbBlocksCols_ - currentColumnIdx_ - 1;
-      updatedBlocksCounter_ = (n * (n + 1)) / 2;
-      this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(
-              blocks_[currentColumnIdx_ * nbBlocksCols_ + currentColumnIdx_]));
+    if (block->x() == currentColumnIdx_ && block->y() == currentColumnIdx_) {
+      this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(std::move(block)));
+    }
+
+    if (updatedBlocksCounter_ == 0 && currentDiagonalBlock_->x() == currentColumnIdx_) {
+      computeColumn();
     }
   }
 
@@ -55,11 +58,9 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
   void execute(std::shared_ptr<MatrixBlockData<T, Result>> block) override {
     if (block->x() == block->y()) {
       currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(std::move(block));
-      for (size_t i = block->y() + 1; i < nbBlocksRows_; ++i) {
-        auto blk = blocks_[i * nbBlocksCols_ + block->x()];
-        this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, blk));
+      if (blocksTtl_ == 0 && updatedBlocksCounter_ == 0) {
+        computeColumn();
       }
-      ++currentColumnIdx_;
     }
     this->addResult(block); // return result block
   }
@@ -82,6 +83,16 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
     nbBlocksCols_ = nbBlocksCols;
     blocks_ = std::vector<std::shared_ptr<MatrixBlockData<T, Block>>>(
             nbBlocksRows_ * nbBlocksCols_, nullptr);
+  }
+
+  void computeColumn() {
+    size_t n = nbBlocksCols_ - currentColumnIdx_ - 1;
+    updatedBlocksCounter_ = (n * (n + 1)) / 2;
+    for (size_t i = currentDiagonalBlock_->y() + 1; i < nbBlocksRows_; ++i) {
+      auto blk = blocks_[i * nbBlocksCols_ + currentColumnIdx_];
+      this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, blk));
+    }
+    ++currentColumnIdx_;
   }
 };
 

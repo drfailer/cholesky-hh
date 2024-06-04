@@ -71,8 +71,8 @@ bool verrifySolution(size_t size, Type *founded, Type *expected,
       if (!((founded[i * size + j] - precision) <= expected[i * size + j] &&
             expected[i * size + j] <= (founded[i * size + j] + precision))) {
         output = false;
-        std::cout << "Error: " << expected[i * size + j]
-                  << " != " << founded[i * size + j] << std::endl;
+        /* std::cout << "Error: " << expected[i * size + j] */
+        /*           << " != " << founded[i * size + j] << std::endl; */
       }
     }
   }
