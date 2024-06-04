@@ -30,7 +30,7 @@ class ComputeColumnBlockTask : public hh::AbstractTask<CCBTaskInNb, CCBTaskIn, C
     cblas_dtrsm(CblasRowMajor, CblasRight, CblasLower, CblasTrans, CblasNonUnit,
                 colBlock->height(), colBlock->width(), 1.0, diagBlock->get(),
                 diagBlock->matrixWidth(), colBlock->get(), colBlock->matrixWidth());
-    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(colBlock));
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(std::move(colBlock)));
   }
 
   std::shared_ptr<hh::AbstractTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut>> copy() override {

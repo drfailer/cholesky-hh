@@ -22,7 +22,7 @@ class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn,
     int32_t info = 0;
     LAPACK_dpotf2((char*) "U", &n, block->get(), &lda, &info);
     /* LAPACK_dpotrf2((char*) "U", &n, block->get(), &lda, &info); */
-    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(block));
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(std::move(block)));
   }
 
   std::shared_ptr<hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut>> copy() override {

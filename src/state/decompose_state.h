@@ -54,7 +54,7 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
   /// start processing the blocks on the column beneath.
   void execute(std::shared_ptr<MatrixBlockData<T, Result>> block) override {
     if (block->x() == block->y()) {
-      currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(block);
+      currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(std::move(block));
       for (size_t i = block->y() + 1; i < nbBlocksRows_; ++i) {
         auto blk = blocks_[i * nbBlocksCols_ + block->x()];
         this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, blk));

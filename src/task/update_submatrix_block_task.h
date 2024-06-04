@@ -33,7 +33,7 @@ class UpdateSubMatrixBlockTask : public hh::AbstractTask<USBTaskInNb, USBTaskIn,
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, m, n, k, -1.0, colBlock1->get(),
                 colBlock1->matrixWidth(), colBlock2->get(), colBlock2->matrixWidth(), 1.0,
                 updatedBlock->get(), updatedBlock->matrixWidth());
-    this->addResult(std::make_shared<MatrixBlockData<T, Updated>>(updatedBlock));
+    this->addResult(std::make_shared<MatrixBlockData<T, Updated>>(std::move(updatedBlock)));
   }
 
   std::shared_ptr<hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut >>

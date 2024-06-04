@@ -24,6 +24,22 @@ class MatrixBlockData {
     rank_ = other->rank();
   }
 
+  template<BlockTypes OtherType>
+  explicit MatrixBlockData(std::shared_ptr<MatrixBlockData<T, OtherType>> &&other)
+          : MatrixBlockData(other->width(), other->height(), other->nbBlocksRows(),
+                            other->nbBlocksCols(), other->x(), other->y(), other->matrixWidth(),
+                            other->matrixHeight(), other->get(), other->fullMatrix()) {
+    rank_ = other->rank();
+  }
+
+  template<BlockTypes OtherType>
+  explicit MatrixBlockData(MatrixBlockData<T, OtherType> &&other)
+          : MatrixBlockData(other.width(), other.height(), other.nbBlocksRows(),
+                            other.nbBlocksCols(), other.x(), other.y(), other.matrixWidth(),
+                            other.matrixHeight(), other.get(), other.fullMatrix()) {
+    rank_ = other.rank();
+  }
+
   [[nodiscard]] size_t width() const { return width_; }
   [[nodiscard]] size_t height() const { return height_; }
 
