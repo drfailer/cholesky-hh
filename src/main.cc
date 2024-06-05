@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
   Config config = {
     .inputFile = "cholesky.in",
     .blockSize = 10,
+    .nbThreadsComputeDiagonalTask = 1,
     .nbThreadsComputeColumnTask = 4,
     .nbThreadsUpdateTask = 4,
     .print = false
@@ -54,7 +55,10 @@ int main(int argc, char **argv) {
     std::cout << *matrix << std::endl;
   }
 
-  CholeskyDecompositionGraph<MatrixType> choleskyGraph(config.nbThreadsComputeColumnTask, config.nbThreadsUpdateTask);
+  CholeskyDecompositionGraph<MatrixType> choleskyGraph(
+      config.nbThreadsComputeDiagonalTask,
+      config.nbThreadsComputeColumnTask,
+      config.nbThreadsUpdateTask);
 
   choleskyGraph.executeGraph(true);
 

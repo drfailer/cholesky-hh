@@ -5,6 +5,7 @@
 struct Config {
   std::string inputFile;
   size_t blockSize;
+  size_t nbThreadsComputeDiagonalTask;
   size_t nbThreadsComputeColumnTask;
   size_t nbThreadsUpdateTask;
   bool print;

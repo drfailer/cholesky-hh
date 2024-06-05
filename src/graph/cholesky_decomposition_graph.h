@@ -20,13 +20,15 @@ template<typename T>
 class CholeskyDecompositionGraph
         : public hh::Graph<CDGraphInNb, CDGraphIn, CDGraphOut > {
  public:
-  CholeskyDecompositionGraph(size_t nbThreadsComputeColumnTask, size_t nbThreadsUpdateTask)
+  CholeskyDecompositionGraph(size_t nbThreadsComputeDiagonalTask,
+      size_t nbThreadsComputeColumnTask,
+      size_t nbThreadsUpdateTask)
           : hh::Graph<CDGraphInNb, CDGraphIn, CDGraphOut >(
           "Cholesky Decomposition") {
     auto splitMatrixTask = std::make_shared<SplitMatrixTask<T, Block>>();
     auto decomposeState = std::make_shared<DecomposeState<T>>();
     auto decomposeStateManager = std::make_shared<DecomposeStateManager<T>>(decomposeState);
-    auto computeDiagonalBlockTask = std::make_shared<ComputeDiagonalBlockTask<T>>();
+    auto computeDiagonalBlockTask = std::make_shared<ComputeDiagonalBlockTask<T>>(nbThreadsComputeDiagonalTask);
     auto computeColumnBlockTask = std::make_shared<ComputeColumnBlockTask<T>>(nbThreadsComputeColumnTask);
     auto updateSubMatrixBlockTask = std::make_shared<UpdateSubMatrixBlockTask<T>>(nbThreadsUpdateTask);
     auto updateSubMatrixState = std::make_shared<UpdateSubMatrixState<T>>();
