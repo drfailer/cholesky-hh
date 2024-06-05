@@ -25,20 +25,17 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
       blocksTtl_ = (nbBlocksCols_ * (nbBlocksCols_ + 1)) / 2;
     }
 
-    blocks_.at(block->y() * nbBlocksRows_ + block->x()) = block;
+    blocks_[block->y() * nbBlocksRows_ + block->x()] = block;
     --blocksTtl_;
 
-    // todo
     if (block->isReady()) {
       if (block->isDiag()) {
         this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
-      } else if (blocks_.at(block->diagIdx())->isProcessed()) {
+      } else if (blocks_[block->diagIdx()]->isProcessed()) {
         this->addResult(std::make_shared<CCBTaskInputType<T>>(
-              std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_.at(block->diagIdx())),
+              std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_[block->diagIdx()]),
               block));
-      } else {
-        // the block will be treated when the diag element is received
-      }
+      } // else the block will be treated when the diag element is received
     }
   }
 
@@ -46,31 +43,31 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
 
   /// @brief Receives blocks from the ComputeColumn task
   void execute(std::shared_ptr<MatrixBlockData<T, Diagonal>> diag) override {
-    blocks_.at(diag->idx())->incRank();
-    diag->incRank();
+    blocks_[diag->idx()]->incRank();
 
     for (size_t i = diag->y() + 1; i < nbBlocksCols_; ++i) {
-      auto block = blocks_.at(i * nbBlocksCols_ + diag->x());
+      auto block = blocks_[i * nbBlocksCols_ + diag->x()];
       if (block && block->isReady()) {
         this->addResult(std::make_shared<CCBTaskInputType<T>>(diag, block));
       }
     }
     // the block is done so we can output the result
-    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(diag));
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(std::move(diag)));
   }
 
   /* Column *******************************************************************/
 
   /// @brief Receives blocks from the ComputeDiagonalBlock task
   void execute(std::shared_ptr<MatrixBlockData<T, Column>> col) override {
-    blocks_.at(col->idx())->incRank();
+    blocks_[col->idx()]->incRank();
     col->incRank();
 
     // send block to the update state
-    this->addResult(std::make_shared<MatrixBlockData<T, Column>>(blocks_.at(col->idx())));
+    /* this->addResult(std::make_shared<MatrixBlockData<T, Column>>(blocks_[col->idx()])); */
+    this->addResult(col);
 
     // the block is done so we can output the result
-    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(col));
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(std::move(col)));
   }
 
   /* Updated ******************************************************************/
@@ -78,20 +75,17 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
   /// @brief Receives the updated blocks from the UpdateBlocks task. When all the blocks are
   /// updated, we start a new column.
   void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
-    blocks_.at(block->idx())->incRank();
+    blocks_[block->idx()]->incRank();
     block->incRank();
 
-    // todo
     if (block->isReady()) {
       if (block->isDiag()) {
         this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
-      } else if (blocks_.at(block->diagIdx())->isProcessed()) {
+      } else if (blocks_[block->diagIdx()]->isProcessed()) {
         this->addResult(std::make_shared<CCBTaskInputType<T>>(
-              std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_.at(block->diagIdx())),
-              blocks_.at(block->idx())));
-      } else {
-        // the block will be treated when the diag element is received
-      }
+              std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_[block->diagIdx()]),
+              blocks_[block->idx()]));
+      } // else the block will be treated when the diag element is received
     }
 
     // we may have to notify the update state
@@ -106,11 +100,9 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
 
  private:
   std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> blocks_ = {};
-  std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> columnBlocks_ = {};
   size_t nbBlocksRows_ = 0;
   size_t nbBlocksCols_ = 0;
   size_t blocksTtl_ = 0;
-  size_t columnBlockTtl_ = 0;
 
   /* helper functions *********************************************************/
 

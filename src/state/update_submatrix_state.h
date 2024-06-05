@@ -30,7 +30,7 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
       nbBlocksCols_ = block->nbBlocksCols();
     }
 
-    blocks_.at(block->y() * block->nbBlocksCols() + block->x()) = block;
+    blocks_[block->y() * block->nbBlocksCols() + block->x()] = block;
     --blocksTtl_;
 
     if (blocksTtl_ == 0) {
@@ -80,10 +80,12 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
   size_t nbBlocksCols_ = 0;
 
   void processPendings() {
-    for (auto it = pendings_.begin(); it != pendings_.end(); it++) {
-      auto col1 = blocks_.at(it->col1Idx);
-      auto col2 = blocks_.at(it->col2Idx);
-      auto updated = blocks_.at(it->updateIdx);
+    auto it = pendings_.begin();
+
+    while (it != pendings_.end()) {
+      auto col1 = blocks_[it->col1Idx];
+      auto col2 = blocks_[it->col2Idx];
+      auto updated = blocks_[it->updateIdx];
       bool col1Processed = col1 && col1->isProcessed();
       bool col2Processed = col2 && col2->isProcessed();
       bool updatedReady = col1 && updated && updated->isUpdateable(col1->rank());
@@ -91,6 +93,8 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
       if (col1Processed && col2Processed && updatedReady) {
         this->addResult(std::make_shared<TripleBlockData<T>>(col1, col2, updated));
         it = pendings_.erase(it);
+      } else {
+        it++;
       }
     }
   }
