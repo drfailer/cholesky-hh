@@ -21,6 +21,8 @@ void parseCmdArgs(int argc, char **argv, Config &config) {
     SizeConstraint sc;
     TCLAP::ValueArg<std::string> inputFileArg("i", "input", "Input file name", true, "", "string");
     cmd.add(inputFileArg);
+    TCLAP::ValueArg<std::string> dotFileArg("g", "graph", "dot file name", true, "", "string");
+    cmd.add(dotFileArg);
     TCLAP::ValueArg<size_t> blockSizeArg("b", "blocksize", "Blocksize", false, 10, &sc);
     cmd.add(blockSizeArg);
     TCLAP::ValueArg<size_t> nbThreadsComputeColumnArg("c", "column", "Number of threads for the compute column task.", false, 4, &sc);
@@ -34,6 +36,7 @@ void parseCmdArgs(int argc, char **argv, Config &config) {
     cmd.parse(argc, argv);
 
     config.inputFile = inputFileArg.getValue();
+    config.dotFile = dotFileArg.getValue();
     config.blockSize = blockSizeArg.getValue();
     config.nbThreadsComputeColumnTask = nbThreadsComputeColumnArg.getValue();
     config.nbThreadsUpdateTask = nbThreadsUpdateArg.getValue();

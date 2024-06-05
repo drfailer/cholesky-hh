@@ -37,6 +37,7 @@ initMatrix(Config const &config) {
 int main(int argc, char **argv) {
   Config config = {
     .inputFile = "cholesky.in",
+    .dotFile = "cholesky-graph.dot",
     .blockSize = 10,
     .nbThreadsComputeDiagonalTask = 1,
     .nbThreadsComputeColumnTask = 4,
@@ -78,7 +79,7 @@ int main(int argc, char **argv) {
     std::cout << *matrix << std::endl;
   }
 
-  choleskyGraph.createDotFile("cholesky-graph.dot", hh::ColorScheme::EXECUTION,
+  choleskyGraph.createDotFile(config.dotFile, hh::ColorScheme::EXECUTION,
                               hh::StructureOptions::QUEUE);
 
   if (!verrifySolution(matrix->width(), matrix->get(), expected->get(), 1e-3)) {
