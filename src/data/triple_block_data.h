@@ -6,13 +6,13 @@
 /// @brief Container that is used to send data to the update task.
 template<typename T>
 struct TripleBlockData {
-  TripleBlockData(std::shared_ptr<MatrixBlockData<T, Result>> first,
-                  std::shared_ptr<MatrixBlockData<T, Result>> second,
+  TripleBlockData(std::shared_ptr<MatrixBlockData<T, Block>> first,
+                  std::shared_ptr<MatrixBlockData<T, Block>> second,
                   std::shared_ptr<MatrixBlockData<T, Block>> third) :
           first(first), second(second), third(third) {}
 
-  std::shared_ptr<MatrixBlockData<T, Result>> first = nullptr;
-  std::shared_ptr<MatrixBlockData<T, Result>> second = nullptr;
+  std::shared_ptr<MatrixBlockData<T, Block>> first = nullptr;
+  std::shared_ptr<MatrixBlockData<T, Block>> second = nullptr;
   std::shared_ptr<MatrixBlockData<T, Block>> third = nullptr;
 };
 

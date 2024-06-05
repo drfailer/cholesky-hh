@@ -7,7 +7,7 @@
 
 #define CDBTaskInNb 1
 #define CDBTaskIn MatrixBlockData<T, Diagonal>
-#define CDBTaskOut MatrixBlockData<T, Result>
+#define CDBTaskOut MatrixBlockData<T, Diagonal>
 
 template<typename T>
 class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut > {
@@ -22,7 +22,7 @@ class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn,
     int32_t info = 0;
     LAPACK_dpotf2((char*) "U", &n, block->get(), &lda, &info);
     /* LAPACK_dpotrf2((char*) "U", &n, block->get(), &lda, &info); */
-    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(std::move(block)));
+    this->addResult(block);
   }
 
   std::shared_ptr<hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut>> copy() override {

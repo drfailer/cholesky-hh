@@ -6,93 +6,119 @@
 #include <hedgehog/hedgehog.h>
 #include <vector>
 
-#define DStateInNb 3
-#define DStateIn MatrixBlockData<T, Block>, MatrixBlockData<T, Result>, MatrixBlockData<T, Updated>
-#define DStateOut MatrixBlockData<T, Diagonal>, CCBTaskInputType<T>, MatrixBlockData<T, Result>
+#define DStateInNb 4
+#define DStateIn MatrixBlockData<T, Block>, MatrixBlockData<T, Diagonal>, MatrixBlockData<T, Column>, MatrixBlockData<T, Updated>
+#define DStateOut MatrixBlockData<T, Diagonal>, MatrixBlockData<T, Column>, CCBTaskInputType<T>, MatrixBlockData<T, Updated>, MatrixBlockData<T, Result>
 
 template<typename T>
 class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut > {
  public:
   explicit DecomposeState() : hh::AbstractState<DStateInNb, DStateIn, DStateOut >() {}
 
+  /* Blocks *******************************************************************/
+
   /// @brief Receives the blocks from the SplitMatrix task.
-  /// todo: we can optimize here by sending the first diagonal element early.
   void execute(std::shared_ptr<MatrixBlockData<T, Block>> block) override {
     // init array and blockttl on first call
-    // todo: this could be done in the constructor
     if (blocks_.size() == 0) {
       init(block->nbBlocksRows(), block->nbBlocksCols());
       blocksTtl_ = (nbBlocksCols_ * (nbBlocksCols_ + 1)) / 2;
     }
 
-    blocks_[block->y() * nbBlocksRows_ + block->x()] = block;
+    blocks_.at(block->y() * nbBlocksRows_ + block->x()) = block;
     --blocksTtl_;
 
-    if (block->x() == currentColumnIdx_ && block->y() == currentColumnIdx_) {
-      this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(std::move(block)));
-    }
-
-    if (blocksTtl_ == 0 && currentDiagonalBlock_) {
-      computeColumn();
+    // todo
+    if (block->isReady()) {
+      if (block->isDiag()) {
+        this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
+      } else if (blocks_.at(block->diagIdx())->isProcessed()) {
+        this->addResult(std::make_shared<CCBTaskInputType<T>>(
+              std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_.at(block->diagIdx())),
+              block));
+      } else {
+        // the block will be treated when the diag element is received
+      }
     }
   }
+
+  /* Diagonal *****************************************************************/
+
+  /// @brief Receives blocks from the ComputeColumn task
+  void execute(std::shared_ptr<MatrixBlockData<T, Diagonal>> diag) override {
+    blocks_.at(diag->idx())->incRank();
+    diag->incRank();
+
+    for (size_t i = diag->y() + 1; i < nbBlocksCols_; ++i) {
+      auto block = blocks_.at(i * nbBlocksCols_ + diag->x());
+      if (block && block->isReady()) {
+        this->addResult(std::make_shared<CCBTaskInputType<T>>(diag, block));
+      }
+    }
+    // the block is done so we can output the result
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(diag));
+  }
+
+  /* Column *******************************************************************/
+
+  /// @brief Receives blocks from the ComputeDiagonalBlock task
+  void execute(std::shared_ptr<MatrixBlockData<T, Column>> col) override {
+    blocks_.at(col->idx())->incRank();
+    col->incRank();
+
+    // send block to the update state
+    this->addResult(std::make_shared<MatrixBlockData<T, Column>>(blocks_.at(col->idx())));
+
+    // the block is done so we can output the result
+    this->addResult(std::make_shared<MatrixBlockData<T, Result>>(col));
+  }
+
+  /* Updated ******************************************************************/
 
   /// @brief Receives the updated blocks from the UpdateBlocks task. When all the blocks are
   /// updated, we start a new column.
-  /// todo: we can optimize here by sending the next diagonal element early.
   void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
-    --updatedBlocksCounter_;
+    blocks_.at(block->idx())->incRank();
+    block->incRank();
 
-    if (block->x() == currentColumnIdx_ && block->y() == currentColumnIdx_) {
-      this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(std::move(block)));
-    }
-
-    if (updatedBlocksCounter_ == 0 && currentDiagonalBlock_->x() == currentColumnIdx_) {
-      computeColumn();
-    }
-  }
-
-  /// @brief Receives the result blocks from the ComputeDiagonal task and the ComputeColumn block
-  /// task. This blocks are the output of the graph. When a new diagonal block is received, we can
-  /// start processing the blocks on the column beneath.
-  void execute(std::shared_ptr<MatrixBlockData<T, Result>> block) override {
-    if (block->x() == block->y()) {
-      currentDiagonalBlock_ = std::make_shared<MatrixBlockData<T, Diagonal>>(std::move(block));
-      if (blocksTtl_ == 0 && updatedBlocksCounter_ == 0) {
-        computeColumn();
+    // todo
+    if (block->isReady()) {
+      if (block->isDiag()) {
+        this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
+      } else if (blocks_.at(block->diagIdx())->isProcessed()) {
+        this->addResult(std::make_shared<CCBTaskInputType<T>>(
+              std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_.at(block->diagIdx())),
+              blocks_.at(block->idx())));
+      } else {
+        // the block will be treated when the diag element is received
       }
     }
-    this->addResult(block); // return result block
+
+    // we may have to notify the update state
+    this->addResult(block);
   }
 
+  /* idDone ******************************************************************/
+
   [[nodiscard]] bool isDone() const {
-    return currentDiagonalBlock_ && currentColumnIdx_ >= nbBlocksCols_;
+    return blocks_.size() && blocks_.back() && blocks_.back()->isProcessed();
   }
 
  private:
   std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> blocks_ = {};
-  std::shared_ptr<MatrixBlockData<T, Diagonal>> currentDiagonalBlock_ = nullptr;
+  std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> columnBlocks_ = {};
   size_t nbBlocksRows_ = 0;
   size_t nbBlocksCols_ = 0;
-  size_t currentColumnIdx_ = 0;
-  size_t updatedBlocksCounter_ = 0;
   size_t blocksTtl_ = 0;
+  size_t columnBlockTtl_ = 0;
+
+  /* helper functions *********************************************************/
 
   void init(size_t nbBlocksRows, size_t nbBlocksCols) {
     nbBlocksRows_ = nbBlocksRows;
     nbBlocksCols_ = nbBlocksCols;
     blocks_ = std::vector<std::shared_ptr<MatrixBlockData<T, Block>>>(
             nbBlocksRows_ * nbBlocksCols_, nullptr);
-  }
-
-  void computeColumn() {
-    size_t n = nbBlocksCols_ - currentColumnIdx_ - 1;
-    updatedBlocksCounter_ = (n * (n + 1)) / 2;
-    for (size_t i = currentDiagonalBlock_->y() + 1; i < nbBlocksRows_; ++i) {
-      auto blk = blocks_[i * nbBlocksCols_ + currentColumnIdx_];
-      this->addResult(std::make_shared<CCBTaskInputType<T>>(currentDiagonalBlock_, blk));
-    }
-    ++currentColumnIdx_;
   }
 };
 

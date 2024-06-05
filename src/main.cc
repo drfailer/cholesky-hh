@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
   }
 
   CholeskyDecompositionGraph<MatrixType> choleskyGraph(config.nbThreadsComputeColumnTask, config.nbThreadsUpdateTask);
+
   choleskyGraph.executeGraph(true);
 
   auto begin = std::chrono::system_clock::now();

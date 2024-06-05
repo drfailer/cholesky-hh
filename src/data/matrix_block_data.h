@@ -58,6 +58,17 @@ class MatrixBlockData {
   void incRank() { ++rank_; }
   void rank(size_t rank) { rank_ = rank; }
 
+  // helper functions to simplify tests
+  [[nodiscard]] bool isProcessed() const { return rank_ > x_; }
+  [[nodiscard]] bool isReady() const { return rank_ == x_; }
+  [[nodiscard]] bool isUpdateable(size_t rank) const { return rank_ == rank - 1; }
+  [[nodiscard]] bool isDiag() const { return y_ == x_; }
+  [[nodiscard]] bool isDiag(size_t idx) const { return y_ == x_ && x_ == idx; }
+  [[nodiscard]] bool isOnCol(size_t col) const { return col == x_; }
+
+  [[nodiscard]] size_t idx() const { return y_ * nbBlocksCols_ + x_; }
+  [[nodiscard]] size_t diagIdx() const { return x_ * nbBlocksCols_ + x_; }
+
   T *fullMatrix() { return fullMatrix_; }
   T *get() { return ptr_; }
 
@@ -65,6 +76,22 @@ class MatrixBlockData {
   // inverted)
   T &at(size_t i, size_t j) { return ptr_[i * matrixWidth_ + j]; }
   T &fullMatrixAt(size_t i, size_t j) { return fullMatrix_[i * matrixWidth_ + j]; }
+
+  friend std::ostream&
+    operator<<(std::ostream& os, const MatrixBlockData<T, BlockType>& block) {
+    os << block.x_ << " " << block.y_ << " (" << block.rank_ << ")";
+    return os;
+  }
+
+  friend std::ostream&
+    operator<<(std::ostream& os, const std::shared_ptr<MatrixBlockData<T, BlockType>>& block) {
+    if (block) {
+      os << *block;
+    } else {
+      os << "nullptr";
+    }
+    return os;
+  }
 
  private:
   size_t width_ = 0;

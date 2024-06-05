@@ -42,7 +42,8 @@ class CholeskyDecompositionGraph
     this->edges(computeColumnBlockTask, decomposeStateManager);
 
     this->edges(splitMatrixTask, updateSubMatrixStateManager);
-    this->edges(computeColumnBlockTask, updateSubMatrixStateManager);
+    /* this->edges(computeColumnBlockTask, updateSubMatrixStateManager); */
+    this->edges(decomposeStateManager, updateSubMatrixStateManager);
 
     this->edges(updateSubMatrixStateManager, updateSubMatrixBlockTask);
     this->edges(updateSubMatrixBlockTask, decomposeStateManager);
