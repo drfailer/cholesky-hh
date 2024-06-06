@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import os
+
+################################################################################
+#                                   Measure                                    #
+################################################################################
+
+class Measure:
+    def __init__(self, size, blockSize, dThreads, cThreads, uThreads):
+        self.size = size
+        self.blockSize = blockSize
+        self.dThreads = dThreads
+        self.cThreads = cThreads
+        self.uThreads = uThreads
+        self.times = []
+
+    def add_time(self, time):
+        self.times.append(time)
+
+    def mean(self):
+        return np.mean(self.times)
+
+    def std(self):
+        return np.std(self.times)
+
+    def present(self):
+        return f"""
+Matrix size: {self.size} ({self.blockSize})
+- threads: d = {self.dThreads}, c = {self.cThreads}, u = {self.uThreads}
+- time: {self.mean()}ms +- {self.std()}ms
+"""
+
+
+################################################################################
+#                            parsing times.txt file                            #
+################################################################################
+
+# will contain all the measures
+measures = []
+
+
+def parse_choleksy_hh_cmd(cmd):
+    args = cmd.split(' ')
+    size = int(args[4].split('/')[-1].split('.')[0])
+    dThreads = int(args[6])
+    cThreads = int(args[8])
+    uThreads = int(args[10])
+    blockSize = int(args[12])
+    return Measure(size, blockSize, dThreads, cThreads, uThreads)
+
+
+def parse_measure(line):
+    line = line.strip()
+    if line[-2:] == "ms":
+        time = int(line[:-2])
+        measures[-1].add_time(time)
+    else:
+        measure = parse_choleksy_hh_cmd(line)
+        measures.append(measure)
+
+
+def parse_time_file(path):
+    with open(path, "r") as file:
+        for line in file:
+            parse_measure(line)
+
+# parse_time_file("./results/1-8-32/128/times.txt")
+
+
+def parse_block_dir(resultDir, threadsDir, blockDir):
+    parse_time_file(f"{resultDir}/{threadsDir}/{blockDir}/times.txt")
+
+
+def parse_threads_results(resultDir, threadsDir):
+    dirs = os.listdir(f"{resultDir}/{threadsDir}")
+
+    for dir in dirs:
+        parse_block_dir(resultDir, threadsDir, dir)
+
+
+def parse_results(resultDir):
+    dirs = os.listdir(resultDir)
+    dirs.remove("cpuinfo.txt")
+
+    for dir in dirs:
+        parse_threads_results(resultDir, dir)
+
+
+def present_results():
+    for measure in measures:
+        print(measure.present())
+
+
+parse_results("./results/")
+present_results()

@@ -4,7 +4,7 @@
 #                               global variables                               #
 ################################################################################
 
-MATRIX_FILES_DIR=../../test-generator/build/test/
+MATRIX_FILES_DIR=../../test-generator/scripts/cholesky/
 CHOLESKY=../build/cholesky-hh
 RESULT_OUTPUT_DIR=./results
 
@@ -41,7 +41,6 @@ for threads in "${THREADS[@]}"; do
       for i in {1..10}; do
         $CHOLESKY -i $MATRIX_FILES_DIR/$file -g $graphname -d $dThreads -c $cThreads -u $uThreads -b $blockSize >> $dirPath/times.txt
       done
-      echo "------" >> $dirPath/times
 
     done
   done
