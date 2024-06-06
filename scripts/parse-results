@@ -124,9 +124,8 @@ def generate_report_blocks(file, block_sizes, threads_measures):
     block_sizes_measures = group_on(threads_measures, lambda measure:
                                      measure.block_size)
     for block_size in block_sizes:
-        file.write(f" {block_sizes_measures[block_size][0].mean()}ms +- {block_sizes_measures[block_size][0].std()}ms |")
+        file.write(f" {block_sizes_measures[block_size][0].mean()}ms +- {'%.3f' % block_sizes_measures[block_size][0].std()}ms |")
     file.write("\n")
-
 
 
 def generate_report_threads(file, size_measures):
@@ -139,6 +138,11 @@ def generate_report_threads(file, size_measures):
         file.write(f" {block_size} |")
     file.write("\n")
 
+    file.write("|")
+    for _ in range(0, len(block_sizes) + 1):
+        file.write(f"---|")
+    file.write("\n")
+
     for threads, threads_measures in threads_groups.items():
         file.write(f"| {threads} |")
         generate_report_blocks(file, block_sizes, threads_measures)
@@ -147,11 +151,13 @@ def generate_report_threads(file, size_measures):
 
 def generate_report(filename):
     sizes_groups = group_on(measures, lambda measure: measure.size)
+    sizes = sorted(list(sizes_groups.keys()))
 
     with open(filename, "w+") as file:
-        for size, size_measures in sizes_groups.items():
-            file.write(f"# {size}\n\n")
-            generate_report_threads(file, size_measures)
+        file.write(f"# Cholesky Hedgehog\n\n")
+        for size in sizes:
+            file.write(f"## Computation times depending on threads repartition and block size for a {size}x{size} matrix\n\n")
+            generate_report_threads(file, sizes_groups[size])
 
 
 ################################################################################
