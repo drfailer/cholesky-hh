@@ -8,9 +8,9 @@ import os
 ################################################################################
 
 class Measure:
-    def __init__(self, size, blockSize, dThreads, cThreads, uThreads):
+    def __init__(self, size, block_size, dThreads, cThreads, uThreads):
         self.size = size
-        self.blockSize = blockSize
+        self.block_size = block_size
         self.dThreads = dThreads
         self.cThreads = cThreads
         self.uThreads = uThreads
@@ -25,9 +25,12 @@ class Measure:
     def std(self):
         return np.std(self.times)
 
+    def threads(self):
+        return f"{self.dThreads}, {self.cThreads}, {self.uThreads}"
+
     def present(self):
         return f"""
-Matrix size: {self.size} ({self.blockSize})
+Matrix size: {self.size} ({self.block_size})
 - threads: d = {self.dThreads}, c = {self.cThreads}, u = {self.uThreads}
 - time: {self.mean()}ms +- {self.std()}ms
 """
@@ -47,8 +50,8 @@ def parse_choleksy_hh_cmd(cmd):
     dThreads = int(args[6])
     cThreads = int(args[8])
     uThreads = int(args[10])
-    blockSize = int(args[12])
-    return Measure(size, blockSize, dThreads, cThreads, uThreads)
+    block_size = int(args[12])
+    return Measure(size, block_size, dThreads, cThreads, uThreads)
 
 
 def parse_measure(line):
@@ -66,7 +69,10 @@ def parse_time_file(path):
         for line in file:
             parse_measure(line)
 
-# parse_time_file("./results/1-8-32/128/times.txt")
+
+################################################################################
+#                            parse result directory                            #
+################################################################################
 
 
 def parse_block_dir(resultDir, threadsDir, blockDir):
@@ -93,5 +99,65 @@ def present_results():
         print(measure.present())
 
 
+################################################################################
+#                               sorting measures                               #
+################################################################################
+
+def group_on(measures, access_field):
+    output = dict()
+
+    for measure in measures:
+        field = access_field(measure)
+        if not field in output:
+            output[field] = []
+
+        output[field].append(measure)
+
+    return output
+
+
+################################################################################
+#                               generate report                                #
+################################################################################
+
+def generate_report_blocks(file, block_sizes, threads_measures):
+    block_sizes_measures = group_on(threads_measures, lambda measure:
+                                     measure.block_size)
+    for block_size in block_sizes:
+        file.write(f" {block_sizes_measures[block_size][0].mean()}ms +- {block_sizes_measures[block_size][0].std()}ms |")
+    file.write("\n")
+
+
+
+def generate_report_threads(file, size_measures):
+    threads_groups = group_on(size_measures, lambda measure: f"{measure.threads()}")
+    block_sizes = sorted(group_on(list(threads_groups.values())[0],
+                           lambda measure: measure.block_size).keys())
+
+    file.write("| threads / blocks sizes |")
+    for block_size in block_sizes:
+        file.write(f" {block_size} |")
+    file.write("\n")
+
+    for threads, threads_measures in threads_groups.items():
+        file.write(f"| {threads} |")
+        generate_report_blocks(file, block_sizes, threads_measures)
+    file.write("\n")
+
+
+def generate_report(filename):
+    sizes_groups = group_on(measures, lambda measure: measure.size)
+
+    with open(filename, "w+") as file:
+        for size, size_measures in sizes_groups.items():
+            file.write(f"# {size}\n\n")
+            generate_report_threads(file, size_measures)
+
+
+################################################################################
+#                                    script                                    #
+################################################################################
+
 parse_results("./results/")
-present_results()
+# present_results()
+generate_report("repport.md")
