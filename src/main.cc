@@ -6,6 +6,7 @@
 #include <fstream>
 #include <chrono>
 #include <memory>
+/* #define TESTING */
 
 using MatrixType = double;
 
@@ -20,18 +21,22 @@ initMatrix(Config const &config) {
 
   fs >> width >> height;
   auto matrix = std::make_shared<MatrixData<T>>(width, height, config.blockSize, new T[width * height]());
+#ifdef TESTING
   auto expected = std::make_shared<MatrixData<T>>(width, height, config.blockSize, new T[width * height]());
+#endif
 
   for (size_t i = 0; i < width * height; ++i) {
     fs >> matrix->get()[i];
   }
 
+#ifdef TESTING
   fs >> width >> height;
   for (size_t i = 0; i < width * height; ++i) {
     fs >> expected->get()[i];
   }
+#endif
 
-  return std::make_pair(matrix, expected);
+  return std::make_pair(matrix, nullptr);
 }
 
 int main(int argc, char **argv) {
@@ -49,7 +54,9 @@ int main(int argc, char **argv) {
 
   auto input = initMatrix<MatrixType>(config);
   auto matrix = input.first;
+#ifdef TESTING
   auto expected = input.second;
+#endif
 
   if (config.print) {
     std::cout << "matrix:" << std::endl;
@@ -73,8 +80,10 @@ int main(int argc, char **argv) {
   std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
 
   if (config.print) {
+#ifdef TESTING
     std::cout << "expected:" << std::endl;
     std::cout << *expected << std::endl;
+#endif
     std::cout << "found:" << std::endl;
     std::cout << *matrix << std::endl;
   }
@@ -82,11 +91,15 @@ int main(int argc, char **argv) {
   choleskyGraph.createDotFile(config.dotFile, hh::ColorScheme::EXECUTION,
                               hh::StructureOptions::QUEUE);
 
+#ifdef TESTING
   if (!verrifySolution(matrix->width(), matrix->get(), expected->get(), 1e-3)) {
     std::cout << "ERROR" << std::endl;
   }
+#endif
 
   delete[] matrix->get();
+#ifdef TESTING
   delete[] expected->get();
+#endif
   return 0;
 }
