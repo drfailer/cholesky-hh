@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 
 ################################################################################
@@ -20,6 +21,13 @@ class Measure:
 
     def mean(self):
         return np.mean(self.times)
+
+
+class MeasureLapack(Measure):
+    def __init__(self, size, threads):
+        Measure.__init__(self, size)
+        self.threads = threads
+
 
 class MeasureHH(Measure):
     def __init__(self, size, block_size, dThreads, cThreads, uThreads):
@@ -45,8 +53,11 @@ Matrix size: {self.size} ({self.block_size})
 ################################################################################
 
 # will contain all the hh_measures
-hh_measures = []
-lapack_measures = []
+hh_measures = dict()
+lapack_measures = dict()
+sizes_list = set()
+block_sizes_list = set()
+threads_list = set()
 
 
 def parse_choleksy_hh_cmd(cmd):
@@ -59,20 +70,34 @@ def parse_choleksy_hh_cmd(cmd):
     return MeasureHH(size, block_size, dThreads, cThreads, uThreads)
 
 
-def parse_measure_hh(line):
+def parse_measure_hh(line, size, threads, block_size):
     line = line.strip()
     if line[-2:] == "ms":
         time = int(line[:-2])
-        hh_measures[-1].add_time(time)
+        hh_measures[size][threads][block_size].add_time(time)
     else:
         measure = parse_choleksy_hh_cmd(line)
-        hh_measures.append(measure)
+        size = measure.size
+        if not size in hh_measures.keys():
+            hh_measures[size] = dict()
+        if not threads in hh_measures[size].keys():
+            hh_measures[size][threads] = dict()
+        sizes_list.add(size)
+        block_sizes_list.add(block_size)
+        threads_list.add(threads)
+        hh_measures[size][threads][block_size] = measure
+
+    return size
 
 
-def parse_time_file(path):
+def parse_time_file(result_dir, threads_dir, block_dir):
+    path = f"{result_dir}/{threads_dir}/{block_dir}/times.txt"
+    size = 0
+    threads = threads_dir
+    block_size = int(block_dir)
     with open(path, "r") as file:
         for line in file:
-            parse_measure_hh(line)
+            size = parse_measure_hh(line, size, threads, block_size)
 
 
 ################################################################################
@@ -80,118 +105,149 @@ def parse_time_file(path):
 ################################################################################
 
 
-def parse_block_dir_hh(result_dir, threads_dir, blockDir):
-    parse_time_file(f"{result_dir}/{threads_dir}/{blockDir}/times.txt")
-
-
 def parse_threads_results(result_dir, threads_dir):
     dirs = os.listdir(f"{result_dir}/{threads_dir}")
 
-    for dir in dirs:
-        parse_block_dir_hh(result_dir, threads_dir, dir)
+    for block_dir in dirs:
+        parse_time_file(result_dir, threads_dir, block_dir)
 
 
 def parse_results_hh(result_dir):
     dirs = os.listdir(result_dir)
     dirs.remove("cpuinfo.txt")
 
-    for dir in dirs:
-        parse_threads_results(result_dir, dir)
+    for threads_dir in dirs:
+        parse_threads_results(result_dir, threads_dir)
 
 
-def parse_times_lapack(filename):
+def parse_times_lapack(threads, filename):
     size = int(filename.split('/')[-1][6: -4])
-    lapack_measures.append(Measure(size))
+
+    if not size in lapack_measures:
+        lapack_measures[size] = dict()
+    lapack_measures[size][threads] = MeasureLapack(size, threads)
     with open(filename, "r") as file:
         for line in file:
             time = int(line[:-3])
-            lapack_measures[-1].add_time(time)
+            lapack_measures[size][threads].add_time(time)
+
+
+def parse_threads_lapack(result_dir, threads_dir):
+    for file in os.listdir(f"{result_dir}/{threads_dir}"):
+        parse_times_lapack(int(threads_dir), f"{result_dir}/{threads_dir}/{file}")
 
 
 def parse_results_lapack(result_dir):
-    for file in os.listdir(result_dir):
-        parse_times_lapack(f"{result_dir}/{file}")
-
-
-################################################################################
-#                               sorting hh_measures                               #
-################################################################################
-
-def group_on_hh(hh_measures, access_field):
-    output = dict()
-
-    for measure in hh_measures:
-        field = access_field(measure)
-        if not field in output:
-            output[field] = []
-
-        output[field].append(measure)
-
-    return output
-
-
-def group_on_lapack(lapack_measures, access_field):
-    output = dict()
-
-    for measure in lapack_measures:
-        field = access_field(measure)
-        output[field] = measure
-
-    return output
+    for threads_dir in os.listdir(result_dir):
+        parse_threads_lapack(result_dir, threads_dir)
 
 
 ################################################################################
 #                               generate report                                #
 ################################################################################
 
-def generate_report_blocks(file, block_sizes, threads_measures):
-    block_sizes_measures = group_on_hh(threads_measures, lambda measure:
-                                     measure.block_size)
-    for block_size in block_sizes:
-        file.write(f" {block_sizes_measures[block_size][0].mean()}ms +- {'%.3f' % block_sizes_measures[block_size][0].std()}ms |")
+def hh_best_measure(size):
+    result = MeasureHH(0, 0, 0, 0, 0)
+
+    for threads_values in hh_measures[size].values():
+        for measure in threads_values.values():
+            if result.size == 0 or measure.mean() < result.mean():
+                result = measure
+
+    return result
+
+
+def lapack_best_measure(size):
+    result = MeasureLapack(0, 0)
+
+    for measure in lapack_measures[size].values():
+        if result.size == 0 or measure.mean() < result.mean():
+            result = measure
+
+    return result
+
+
+def generate_report_blocks(file, threads_measures):
+    for block_size in block_sizes_list:
+        file.write(f" {threads_measures[block_size].mean()}ms +- {'%.3f' % threads_measures[block_size].std()}ms |")
     file.write("\n")
 
 
-def generate_report_threads(file, size_measures_hh, size_measure_lapack):
-    best_time_hh = sorted(size_measures_hh, key = lambda measure:
-                          measure.mean())[0].mean()
-    lapack_time = size_measure_lapack.mean()
-    speedup = lapack_time / best_time_hh
-    threads_groups = group_on_hh(size_measures_hh, lambda measure: f"{measure.threads()}")
-    block_sizes = sorted(group_on_hh(list(threads_groups.values())[0],
-                           lambda measure: measure.block_size).keys())
-
-    file.write("| threads / block sizes |")
-    for block_size in block_sizes:
+def generate_report_threads(file, size):
+    file.write("| threads / block sizes_list |")
+    for block_size in block_sizes_list:
         file.write(f" {block_size} |")
     file.write("\n")
 
     file.write("|")
-    for _ in range(0, len(block_sizes) + 1):
+    for _ in range(0, len(block_sizes_list) + 1):
         file.write(f"---|")
     file.write("\n")
 
-    for threads, threads_measures in threads_groups.items():
+    for threads in threads_list:
         file.write(f"| {threads} |")
-        generate_report_blocks(file, block_sizes, threads_measures)
+        generate_report_blocks(file, hh_measures[size][threads])
     file.write("\n")
 
-    file.write(f"lapack's time: {lapack_time}\n")
-    file.write(f"speedup max: {speedup}\n")
-    file.write("\n")
+    best_hh = hh_best_measure(size)
+    best_lapack = lapack_best_measure(size)
+    file.write(f"Best HH: threads = {best_hh.threads()}, block_size {best_hh.block_size}: {best_hh.mean()}\n")
+    file.write(f"Best Lapack: threads = {best_lapack.threads}: {best_lapack.mean()}\n")
+    file.write(f"Speedup max: {best_lapack.mean() / best_hh.mean()}\n\n")
 
 
-def generate_report(filename):
-    sizes_groups_hh = group_on_hh(hh_measures, lambda measure: measure.size)
-    sizes_groups_lapack = group_on_lapack(lapack_measures, lambda measure: measure.size)
-    sizes = sorted(list(sizes_groups_hh.keys()))
-
+def generate_hh_report(filename):
     with open(filename, "w+") as file:
         file.write(f"# Cholesky Hedgehog\n\n")
-        for size in sizes:
+        for size in sizes_list:
             file.write(f"## Computation times depending on threads repartition and block size for a {size}x{size} matrix\n\n")
-            generate_report_threads(file, sizes_groups_hh[size],
-                                    sizes_groups_lapack[size])
+            generate_report_threads(file, size)
+
+
+################################################################################
+#                                generate plots                                #
+################################################################################
+
+def create_graph(x, datas, xlabel, ylabel, title):
+    for label, values in datas.items():
+        plt.plot(x, values, label=label)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend(loc='best')
+
+
+def generate_time_plot(size, block_size, filename):
+    times = { "hedgehog": [], "lapack": [] }
+
+    for threads in threads_list:
+        hh_time = hh_measures[size][threads][block_size].mean()
+        times["hedgehog"].append(hh_time)
+        # lapack_time = lapack_measures[size][int(threads.split('-')[-1])].mean()
+        lapack_time = lapack_measures[size][40].mean()
+        times["lapack"].append(lapack_time)
+
+    create_graph(list(map(lambda threads: int(threads.split('-')[-1]), threads_list)),
+                 times, "number of threads", "computation time (ms)",
+                 f"Computation time of Hedgehog's Cholesky and dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix")
+    plt.savefig(filename)
+
+
+def generate_speedup_plot(size, block_size, filename):
+    speedups = []
+
+    for threads in threads_list:
+        hh_time = hh_measures[size][threads][block_size].mean()
+        # lapack_time = lapack_measures[size][int(threads.split('-')[-1])].mean()
+        lapack_time = lapack_measures[size][40].mean()
+        speedups.append(lapack_time / hh_time)
+
+    plt.xlabel("number of threads")
+    plt.ylabel("speedup")
+    plt.title(f"Speedup of Hedgehog's Cholesky against dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix")
+    plt.plot(list(map(lambda threads: int(threads.split('-')[-1]), threads_list)),
+             speedups)
+    plt.savefig(filename)
 
 
 ################################################################################
@@ -200,4 +256,6 @@ def generate_report(filename):
 
 parse_results_hh("./results/")
 parse_results_lapack("../../cholesky-one-thread/scripts/result/")
-generate_report("repport.md")
+generate_hh_report("repport.md")
+generate_speedup_plot(10000, 256, "speedup1000.png")
+generate_time_plot(10000, 256, "times1000.png")
