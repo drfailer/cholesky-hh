@@ -218,35 +218,38 @@ def create_graph(x, datas, xlabel, ylabel, title):
 
 
 def generate_time_plot(size, block_size, filename):
+    sorted_threads = sorted(threads_list, key = lambda threads: int(threads.split('-')[-1]))
+    x_axis = list(map(lambda threads: int(threads.split('-')[-1]), sorted_threads))
     times = { "hedgehog": [], "lapack": [] }
 
-    for threads in threads_list:
+    for threads, x in zip(sorted_threads, x_axis):
         hh_time = hh_measures[size][threads][block_size].mean()
         times["hedgehog"].append(hh_time)
-        # lapack_time = lapack_measures[size][int(threads.split('-')[-1])].mean()
-        lapack_time = lapack_measures[size][40].mean()
+        lapack_time = lapack_measures[size][x].mean()
         times["lapack"].append(lapack_time)
 
-    create_graph(list(map(lambda threads: int(threads.split('-')[-1]), threads_list)),
-                 times, "number of threads", "computation time (ms)",
+    create_graph(x_axis,
+                 times,
+                 "number of threads",
+                 "computation time (ms)",
                  f"Computation time of Hedgehog's Cholesky and dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix")
     plt.savefig(filename)
 
 
 def generate_speedup_plot(size, block_size, filename):
+    sorted_threads = sorted(threads_list, key = lambda threads: int(threads.split('-')[-1]))
+    x_axis = list(map(lambda threads: int(threads.split('-')[-1]), sorted_threads))
     speedups = []
 
-    for threads in threads_list:
+    for threads, x in zip(sorted_threads, x_axis):
         hh_time = hh_measures[size][threads][block_size].mean()
-        # lapack_time = lapack_measures[size][int(threads.split('-')[-1])].mean()
-        lapack_time = lapack_measures[size][40].mean()
+        lapack_time = lapack_measures[size][x].mean()
         speedups.append(lapack_time / hh_time)
 
     plt.xlabel("number of threads")
     plt.ylabel("speedup")
     plt.title(f"Speedup of Hedgehog's Cholesky against dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix")
-    plt.plot(list(map(lambda threads: int(threads.split('-')[-1]), threads_list)),
-             speedups)
+    plt.plot(x_axis, speedups)
     plt.savefig(filename)
 
 
@@ -257,5 +260,5 @@ def generate_speedup_plot(size, block_size, filename):
 parse_results_hh("./results/")
 parse_results_lapack("../../cholesky-one-thread/scripts/result/")
 generate_hh_report("repport.md")
-generate_speedup_plot(10000, 256, "speedup1000.png")
-generate_time_plot(10000, 256, "times1000.png")
+generate_speedup_plot(10000, 256, "speedup10000.png")
+generate_time_plot(10000, 256, "times10000.png")
