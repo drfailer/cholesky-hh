@@ -21,7 +21,7 @@ class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn,
     int32_t lda = block->matrixWidth();
     int32_t info = 0;
     /* LAPACK_dpotf2((char*) "U", &n, block->get(), &lda, &info); */
-    LAPACK_dpotrf2((char*) "U", &n, block->get(), &lda, &info);
+    LAPACK_dpotrf((char*) "U", &n, block->get(), &lda, &info);
     this->addResult(block);
   }
 
