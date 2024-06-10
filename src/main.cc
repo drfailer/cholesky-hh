@@ -6,37 +6,45 @@
 #include <fstream>
 #include <chrono>
 #include <memory>
-/* #define TESTING */
+#define TESTING
 
 using MatrixType = double;
 
 template <typename T>
 std::pair<std::shared_ptr<MatrixData<T>>, std::shared_ptr<MatrixData<T>>>
 initMatrix(Config const &config) {
-  std::ifstream fs(config.inputFile);
+  std::ifstream fs(config.inputFile, std::ios::binary);
   size_t width, height;
 
   // make openblas using only one thread
   openblas_set_num_threads(1);
 
-  fs >> width >> height;
-  auto matrix = std::make_shared<MatrixData<T>>(width, height, config.blockSize, new T[width * height]());
+  fs.read(reinterpret_cast<char*>(&width), sizeof(width));
+  fs.read(reinterpret_cast<char*>(&height), sizeof(height));
+  auto matrix = std::make_shared<MatrixData<T>>(width, height,
+      config.blockSize, new T[width * height]());
 #ifdef TESTING
-  auto expected = std::make_shared<MatrixData<T>>(width, height, config.blockSize, new T[width * height]());
+  auto expected = std::make_shared<MatrixData<T>>(width, height,
+      config.blockSize, new T[width * height]());
 #endif
 
   for (size_t i = 0; i < width * height; ++i) {
-    fs >> matrix->get()[i];
+    fs.read(reinterpret_cast<char*>(matrix->get() + i), sizeof(matrix->get()[i]));
   }
 
 #ifdef TESTING
-  fs >> width >> height;
+  fs.read(reinterpret_cast<char*>(&width), sizeof(width));
+  fs.read(reinterpret_cast<char*>(&height), sizeof(height));
   for (size_t i = 0; i < width * height; ++i) {
-    fs >> expected->get()[i];
+    fs.read(reinterpret_cast<char*>(expected->get() + i), sizeof(expected->get()[i]));
   }
 #endif
 
+#ifdef TESTING
+  return std::make_pair(matrix, expected);
+#else
   return std::make_pair(matrix, nullptr);
+#endif
 }
 
 int main(int argc, char **argv) {
