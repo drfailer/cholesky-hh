@@ -190,10 +190,11 @@ def generate_report_threads(file, size):
     file.write("\n")
 
     best_hh = hh_best_measure(size)
-    best_lapack = lapack_best_measure(size)
     file.write(f"Best HH: threads = {best_hh.threads()}, block_size {best_hh.block_size}: {best_hh.mean()}\n")
-    file.write(f"Best Lapack: threads = {best_lapack.threads}: {best_lapack.mean()}\n")
-    file.write(f"Speedup max: {best_lapack.mean() / best_hh.mean()}\n\n")
+    if size in lapack_measures.keys():
+        best_lapack = lapack_best_measure(size)
+        file.write(f"Best Lapack: threads = {best_lapack.threads}: {best_lapack.mean()}\n")
+        file.write(f"Speedup max: {best_lapack.mean() / best_hh.mean()}\n\n")
 
 
 def generate_hh_report(filename):
