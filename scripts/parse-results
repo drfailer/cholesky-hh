@@ -211,10 +211,14 @@ def generate_hh_report(filename):
 
 def create_graph(x, datas, xlabel, ylabel, title):
     for label, values in datas.items():
-        plt.plot(x, values, label=label)
+        # plt.plot(x, list(map(lambda v: v[0], values)), label=label)
+        plt.errorbar(x,
+                     list(map(lambda v: v[0], values)),
+                     list(map(lambda v: v[1], values)),
+                     label=label)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.title(title)
+    plt.title(title, wrap=True)
     plt.legend(loc='best')
 
 
@@ -225,9 +229,11 @@ def generate_time_plot(size, block_size, filename):
 
     for threads, x in zip(sorted_threads, x_axis):
         hh_time = hh_measures[size][threads][block_size].mean()
-        times["hedgehog"].append(hh_time)
+        hh_std = hh_measures[size][threads][block_size].std()
+        times["hedgehog"].append((hh_time, hh_std))
         lapack_time = lapack_measures[size][x].mean()
-        times["lapack"].append(lapack_time)
+        lapack_std = lapack_measures[size][x].std()
+        times["lapack"].append((lapack_time, hh_std))
 
     create_graph(x_axis,
                  times,
@@ -249,7 +255,7 @@ def generate_speedup_plot(size, block_size, filename):
 
     plt.xlabel("number of threads")
     plt.ylabel("speedup")
-    plt.title(f"Speedup of Hedgehog's Cholesky against dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix")
+    plt.title(f"Speedup of Hedgehog's Cholesky against dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix", wrap=True)
     plt.plot(x_axis, speedups)
     plt.savefig(filename)
 
@@ -259,7 +265,7 @@ def generate_speedup_plot(size, block_size, filename):
 ################################################################################
 
 parse_results_hh("./results/")
-parse_results_lapack("../../cholesky-one-thread/scripts/result/")
+parse_results_lapack("../../cholesky-one-thread/scripts/results/")
 generate_hh_report("repport.md")
 generate_speedup_plot(10000, 256, "speedup10000.png")
 generate_time_plot(10000, 256, "times10000.png")
