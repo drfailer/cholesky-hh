@@ -4,16 +4,16 @@
 #include "./matrix_block_data.h"
 
 /// @brief Container that is used to send data to the update task.
-template<typename T>
+template<typename T, BlockTypes B1 = Block, BlockTypes B2 = Block, BlockTypes B3 = Block>
 struct TripleBlockData {
-  TripleBlockData(std::shared_ptr<MatrixBlockData<T, Block>> first,
-                  std::shared_ptr<MatrixBlockData<T, Block>> second,
-                  std::shared_ptr<MatrixBlockData<T, Block>> third) :
+  TripleBlockData(std::shared_ptr<MatrixBlockData<T, B1>> first,
+                  std::shared_ptr<MatrixBlockData<T, B2>> second,
+                  std::shared_ptr<MatrixBlockData<T, B3>> third) :
           first(first), second(second), third(third) {}
 
-  std::shared_ptr<MatrixBlockData<T, Block>> first = nullptr;
-  std::shared_ptr<MatrixBlockData<T, Block>> second = nullptr;
-  std::shared_ptr<MatrixBlockData<T, Block>> third = nullptr;
+  std::shared_ptr<MatrixBlockData<T, B1>> first = nullptr;
+  std::shared_ptr<MatrixBlockData<T, B2>> second = nullptr;
+  std::shared_ptr<MatrixBlockData<T, B3>> third = nullptr;
 };
 
 #endif //CHOLESKY_HH_TRIPLE_BLOCK_DATA_H
