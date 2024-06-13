@@ -1,4 +1,5 @@
 #include "graph/cholesky_decomposition_graph.h"
+#include "graph/cholesky_solver_graph.h"
 #include "utils.h"
 #include "config.h"
 #include <cblas.h>
@@ -15,9 +16,6 @@ std::pair<std::shared_ptr<MatrixData<T>>, std::shared_ptr<MatrixData<T>>>
 initMatrix(Config const &config) {
   std::ifstream fs(config.inputFile, std::ios::binary);
   size_t width, height;
-
-  // make openblas using only one thread
-  openblas_set_num_threads(1);
 
   fs.read(reinterpret_cast<char*>(&width), sizeof(width));
   fs.read(reinterpret_cast<char*>(&height), sizeof(height));
@@ -58,6 +56,7 @@ int main(int argc, char **argv) {
     .print = false
   };
 
+  openblas_set_num_threads(1);
   parseCmdArgs(argc, argv, config);
 
   auto input = initMatrix<MatrixType>(config);
@@ -75,7 +74,9 @@ int main(int argc, char **argv) {
       config.nbThreadsComputeDiagonalTask,
       config.nbThreadsComputeColumnTask,
       config.nbThreadsUpdateTask);
+  CholeskySolverGraph<MatrixType> choleskySolverGraph;
 
+  choleskySolverGraph.executeGraph(true);
   choleskyGraph.executeGraph(true);
 
   auto begin = std::chrono::system_clock::now();
