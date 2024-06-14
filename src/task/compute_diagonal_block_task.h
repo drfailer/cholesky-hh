@@ -10,10 +10,10 @@
 #define CDBTaskOut MatrixBlockData<T, Diagonal>
 
 template<typename T>
-class ComputeDiagonalBlockTask : public hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut > {
+class ComputeDiagonalBlockTask : public hh::AbstractAtomicTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut > {
  public:
   explicit ComputeDiagonalBlockTask(size_t nbThreads) :
-          hh::AbstractTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut >("Compute Diagonal Block Task", nbThreads) {}
+          hh::AbstractAtomicTask<CDBTaskInNb, CDBTaskIn, CDBTaskOut >("Compute Diagonal Block Task", nbThreads) {}
 
   void execute(std::shared_ptr<MatrixBlockData<T, Diagonal>> block) override {
     int32_t n = block->height();

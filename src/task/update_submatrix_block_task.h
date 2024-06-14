@@ -14,10 +14,10 @@ using UpdateSubmatrixBlockInputType = TripleBlockData<T>;
 #define USBTaskOut MatrixBlockData<T, Updated>
 
 template<typename T>
-class UpdateSubMatrixBlockTask : public hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut > {
+class UpdateSubMatrixBlockTask : public hh::AbstractAtomicTask<USBTaskInNb, USBTaskIn, USBTaskOut > {
  public:
   explicit UpdateSubMatrixBlockTask(size_t nbThreads) :
-          hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut >("Update Submatrix Block Task",
+          hh::AbstractAtomicTask<USBTaskInNb, USBTaskIn, USBTaskOut >("Update Submatrix Block Task",
                                                                 nbThreads) {}
 
   /// @brief Receives 3 blocks. The first two blocks are on the column that is processed. The third

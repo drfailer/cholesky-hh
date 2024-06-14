@@ -3,8 +3,9 @@
 
 #include <cstddef>
 #include <hedgehog/hedgehog.h>
+#include "matrix_types.h"
 
-template<typename T>
+template<typename T, MatrixTypes MT = MatrixTypes::Matrix>
 class MatrixData {
  public:
   MatrixData(size_t width, size_t height, size_t blockSize, T *ptr)

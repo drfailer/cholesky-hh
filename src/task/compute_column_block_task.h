@@ -15,10 +15,10 @@ using CCBTaskInputType =
 #define CCBTaskOut MatrixBlockData<T, Column>
 
 template<typename T>
-class ComputeColumnBlockTask : public hh::AbstractTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut > {
+class ComputeColumnBlockTask : public hh::AbstractAtomicTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut > {
  public:
   explicit ComputeColumnBlockTask(size_t nbThreads)
-          : hh::AbstractTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut >(
+          : hh::AbstractAtomicTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut >(
           "Compute Column Block Task", nbThreads) {}
 
   /// @brief Receives a pair of blocks. The first block is a the diagonal element on the column and

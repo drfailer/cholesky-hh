@@ -46,6 +46,8 @@ set(cholesky_hh_files
 		src/data/triple_block_data.h
 		src/state/update_submatrix_state_manager.h
     src/config.cc src/config.h
+		src/graph/cholesky_graph.h
+		src/data/matrix_types.h
 )
 
 # executable

@@ -10,7 +10,7 @@
 #include <hedgehog/hedgehog.h>
 
 #define CSGraphInNb 2
-#define CSGraphIn MatrixData<T>, MatrixBlockData<T, Result>
+#define CSGraphIn MatrixData<T, MatrixTypes::Vector>, MatrixBlockData<T, Result>
 #define CSGraphOut MatrixBlockData<T, Result>
 
 template<typename T>
@@ -40,6 +40,5 @@ class CholeskySolverGraph
     this->outputs(solverStateManager);
   }
 };
-
 
 #endif
