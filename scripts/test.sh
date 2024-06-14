@@ -1,27 +1,33 @@
-#!/usr/bin/env bash                                                                                                                                                                                       [10/1923]
+#!/bin/bash
+
 ################################################################################
 #                               global variables                               #
 ################################################################################
 
-MATRIX_FILES_DIR=/scratch/rvc1/samples
-CHOLESKY=/scratch/rvc1/cholesky-hh
-RESULT_OUTPUT_DIR=/scratch/rvc1/results-hh
+MATRIX_FILES_DIR=../../test-generator/scripts/cholesky0-10/
+CHOLESKY=../build/cholesky-hh
+RESULT_OUTPUT_DIR=./results
 
-if [ $# -eq 1 ]; then
-  RESULT_OUTPUT_DIR=/scratch/rvc1/results-hh-$1
-fi
+# if [ $# -eq 1 ]; then
+#   RESULT_OUTPUT_DIR=./results-$1
+# fi
 
 BLOCK_SIZE_MIN=256
-BLOCK_SIZE_MAX=512
-NB_MEASURES=5
+BLOCK_SIZE_MAX=256
+NB_MEASURES=10
 # threads for the tasks.
 # strings: "d c u" (diagonal column update)
-declare -a THREADS=(
-  "1 8 384"
-  "1 16 384"
-  "1 32 384"
-  "1 64 384"
-)
+declare -a THREADS=()
+# declare -a THREADS=(
+#   "1 8 384"
+#   "1 16 384"
+#   "1 32 384"
+#   "1 64 384"
+# )
+
+for ((i=5; i<=40; i+=5)); do
+  THREADS+=("1 8 $i")
+done
 
 ################################################################################
 #                                running tests                                 #
@@ -37,6 +43,7 @@ run_cholesky() {
   uThreads=$5
   blockSize=$6
   timefile=$7
+  echo "$CHOLESKY -i $inputfile -g $graphname -d $dThreads -c $cThreads -u $uThreads -b $blockSize"
   echo "$CHOLESKY -i $inputfile -g $graphname -d $dThreads -c $cThreads -u $uThreads -b $blockSize" >> $timefile
   for ((i=0; i<$NB_MEASURES; i+=1)); do
     $CHOLESKY -i $inputfile -g $graphname -d $dThreads -c $cThreads -u $uThreads -b $blockSize >> $timefile
