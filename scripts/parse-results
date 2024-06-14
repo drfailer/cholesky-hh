@@ -209,23 +209,33 @@ def generate_hh_report(filename):
 #                                generate plots                                #
 ################################################################################
 
-def create_graph(x, datas, xlabel, ylabel, title):
+def create_plot(x, datas, xlabel, ylabel, title, legend=True, std=False,
+                filename=""):
     for label, values in datas.items():
-        # plt.plot(x, list(map(lambda v: v[0], values)), label=label)
-        plt.errorbar(x,
-                     list(map(lambda v: v[0], values)),
-                     list(map(lambda v: v[1], values)),
-                     label=label)
+        if std:
+            vals = list(map(lambda v: v[0], values))
+            errs = list(map(lambda v: v[1], values))
+            plt.errorbar(x, vals, errs, label=label)
+        else:
+            plt.plot(x, values, label=label)
+
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title, wrap=True)
-    plt.legend(loc='best')
+
+    if legend:
+        plt.legend(loc='best')
+
+    if len(filename):
+        plt.savefig(filename)
+
+    plt.clf()
 
 
 def generate_time_plot(size, block_size, filename):
     sorted_threads = sorted(threads_list, key = lambda threads: int(threads.split('-')[-1]))
     x_axis = list(map(lambda threads: int(threads.split('-')[-1]), sorted_threads))
-    times = { "hedgehog": [], "lapack": [] }
+    times = { "hedgehog": [], "openblas": [] }
 
     for threads, x in zip(sorted_threads, x_axis):
         hh_time = hh_measures[size][threads][block_size].mean()
@@ -233,14 +243,16 @@ def generate_time_plot(size, block_size, filename):
         times["hedgehog"].append((hh_time, hh_std))
         lapack_time = lapack_measures[size][x].mean()
         lapack_std = lapack_measures[size][x].std()
-        times["lapack"].append((lapack_time, hh_std))
+        times["openblas"].append((lapack_time, hh_std))
 
-    create_graph(x_axis,
-                 times,
-                 "number of threads",
-                 "computation time (ms)",
-                 f"Computation time of Hedgehog's Cholesky and dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix")
-    plt.savefig(filename)
+    create_plot(x_axis,
+                times,
+                "number of threads",
+                "computation time (ms)",
+                f"Computation time of Hedgehog's Cholesky and dpotrf (openblas) depending on the number of threads for a {size}x{size} matrix",
+                legend=True,
+                std=True,
+                filename=filename)
 
 
 def generate_speedup_plot(size, block_size, filename):
@@ -253,19 +265,44 @@ def generate_speedup_plot(size, block_size, filename):
         lapack_time = lapack_measures[size][x].mean()
         speedups.append(lapack_time / hh_time)
 
-    plt.xlabel("number of threads")
-    plt.ylabel("speedup")
-    plt.title(f"Speedup of Hedgehog's Cholesky against dpotrf2 (Lapack) depending on the number of threads for a {size}x{size} matrix", wrap=True)
-    plt.plot(x_axis, speedups)
-    plt.savefig(filename)
+    create_plot(x_axis,
+                { "speedup": speedups },
+                "number of threads",
+                "speedup",
+                f"Speedup of Hedgehog's Cholesky against dpotrf (openblas) depending on the number of threads for a {size}x{size} matrix",
+                legend=False,
+                filename=filename)
+
+
+def generate_relative_speedup_plot(size, block_size, filename):
+    sorted_threads = sorted(threads_list, key = lambda threads: int(threads.split('-')[-1]))
+    x_axis = list(map(lambda threads: int(threads.split('-')[-1]), sorted_threads))
+    speedups = { "hedgehog": [], "openblas": [] }
+    hh_one_thread_time = hh_measures[size][sorted_threads[0]][block_size].mean()
+    lapack_one_thread_time = lapack_measures[size][x_axis[0]].mean()
+
+    for threads, x in zip(sorted_threads, x_axis):
+        hh_time = hh_measures[size][threads][block_size].mean()
+        lapack_time = lapack_measures[size][x].mean()
+        speedups["hedgehog"].append(hh_one_thread_time / hh_time)
+        speedups["openblas"].append(lapack_one_thread_time / lapack_time)
+
+    create_plot(x_axis,
+                speedups,
+                "number of threads",
+                "speedup",
+                f"Relative speedup of Hedgehog's Cholesky and dpotrf (openblas) depending on the number of threads for a {size}x{size} matrix",
+                legend=True,
+                filename=filename)
 
 
 ################################################################################
 #                                    script                                    #
 ################################################################################
 
-parse_results_hh("./results/")
-parse_results_lapack("../../cholesky-one-thread/scripts/results/")
+parse_results_hh("./first-desktop-measure/")
+parse_results_lapack("../../cholesky-one-thread/scripts/first-desktop-measures")
 generate_hh_report("repport.md")
-generate_speedup_plot(10000, 256, "speedup10000.png")
-generate_time_plot(10000, 256, "times10000.png")
+generate_speedup_plot(10000, 256, "speedup10000.pdf")
+generate_time_plot(10000, 256, "times10000.pdf")
+generate_relative_speedup_plot(10000, 256, "relative-speedup10000.pdf")
