@@ -8,7 +8,7 @@
 template<typename T>
 using CCBTaskInputType =
         std::pair<std::shared_ptr<MatrixBlockData<T, Diagonal>>,
-                std::shared_ptr<MatrixBlockData<T, Block>>>;
+                std::shared_ptr<MatrixBlockData<T, MatrixBlock>>>;
 
 #define CCBTaskInNb 1
 #define CCBTaskIn CCBTaskInputType<T>

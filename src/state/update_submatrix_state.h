@@ -8,7 +8,7 @@
 #include "../task/update_submatrix_block_task.h"
 
 #define USMStateInNb 3
-#define USMStateIn MatrixBlockData<T, Block>, MatrixBlockData<T, Column>, MatrixBlockData<T, Updated>
+#define USMStateIn MatrixBlockData<T, MatrixBlock>, MatrixBlockData<T, Column>, MatrixBlockData<T, Updated>
 
 #define USMStateOut UpdateSubmatrixBlockInputType<T>
 
@@ -21,10 +21,10 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
   /* Block ********************************************************************/
 
   /// @brief Receives the blocks from the SplitMatrix task and store them.
-  void execute(std::shared_ptr<MatrixBlockData<T, Block>> block) override {
+  void execute(std::shared_ptr<MatrixBlockData<T, MatrixBlock>> block) override {
     // special case for the first block received (may change as we can also give the information threw constructor)
     if (blocks_.size() == 0) {
-      blocks_ = std::vector<std::shared_ptr<MatrixBlockData<T, Block>>>(
+      blocks_ = std::vector<std::shared_ptr<MatrixBlockData<T, MatrixBlock>>>(
               block->nbBlocksCols() * block->nbBlocksRows(), nullptr);
       blocksTtl_ = (block->nbBlocksCols() * (block->nbBlocksCols() + 1)) / 2;
       nbBlocksCols_ = block->nbBlocksCols();
@@ -74,7 +74,7 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
     size_t col2Idx;
     size_t updateIdx;
   };
-  std::vector<std::shared_ptr<MatrixBlockData<T, Block>>> blocks_ = {};
+  std::vector<std::shared_ptr<MatrixBlockData<T, MatrixBlock>>> blocks_ = {};
   std::list<TripleIndex> pendings_ = {};
   size_t blocksTtl_ = 0;
   size_t nbBlocksCols_ = 0;

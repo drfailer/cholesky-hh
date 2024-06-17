@@ -4,7 +4,7 @@
 #include "./matrix_block_data.h"
 
 /// @brief Container that is used to send data to the update task.
-template<typename T, BlockTypes B1 = Block, BlockTypes B2 = Block, BlockTypes B3 = Block>
+template <typename T, BlockTypes B1 = MatrixBlock, BlockTypes B2 = MatrixBlock, BlockTypes B3 = MatrixBlock>
 struct TripleBlockData {
   TripleBlockData(std::shared_ptr<MatrixBlockData<T, B1>> first,
                   std::shared_ptr<MatrixBlockData<T, B2>> second,
