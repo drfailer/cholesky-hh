@@ -8,8 +8,6 @@
 #include <memory>
 #include <tuple>
 
-#define TESTING
-
 using MatrixType = double;
 
 template <typename T>
@@ -32,46 +30,44 @@ InitType<T> initMatrix(Config const &config) {
                                                                      new T[width * height]());
   auto result = std::make_shared<MatrixData<T, MatrixTypes::Vector>>(1, height, config.blockSize,
                                                                      new T[height]());
-#ifdef TESTING
   auto triangular = std::make_shared<MatrixData<T, MatrixTypes::Matrix>>(width, height,
                                                                          config.blockSize,
                                                                          new T[width * height]());
   auto solution = std::make_shared<MatrixData<T, MatrixTypes::Vector>>(1, height, config.blockSize,
                                                                        new T[height]());
-#endif
 
+  // read the matrix
   for (size_t i = 0; i < width * height; ++i) {
     fs.read(reinterpret_cast<char *>(matrix->get() + i), sizeof(matrix->get()[i]));
   }
 
-#ifdef TESTING
+  // read the expected triangular matrix and its size
   fs.read(reinterpret_cast<char *>(&width), sizeof(width));
   fs.read(reinterpret_cast<char *>(&height), sizeof(height));
   for (size_t i = 0; i < width * height; ++i) {
     fs.read(reinterpret_cast<char *>(triangular->get() + i), sizeof(triangular->get()[i]));
   }
-#endif
 
+  // read the result vector and its size
   fs.read(reinterpret_cast<char *>(&width), sizeof(width));
   fs.read(reinterpret_cast<char *>(&height), sizeof(height));
   for (size_t i = 0; i < height; ++i) {
     fs.read(reinterpret_cast<char *>(result->get() + i), sizeof(result->get()[i]));
   }
 
-#ifdef TESTING
+  // read the solution vector and its size
   fs.read(reinterpret_cast<char *>(&width), sizeof(width));
   fs.read(reinterpret_cast<char *>(&height), sizeof(height));
   for (size_t i = 0; i < height; ++i) {
     fs.read(reinterpret_cast<char *>(solution->get() + i), sizeof(solution->get()[i]));
   }
-#endif
 
-#ifdef TESTING
   return std::make_tuple(matrix, result, triangular, solution);
-#else
-  return std::make_pair(matrix, nullptr);
-#endif
 }
+
+/******************************************************************************/
+/* main                                                                       */
+/******************************************************************************/
 
 int main(int argc, char **argv) {
   Config config = {
@@ -90,10 +86,8 @@ int main(int argc, char **argv) {
   auto input = initMatrix<MatrixType>(config);
   auto matrix = std::get<0>(input);
   auto result = std::get<1>(input);
-#ifdef TESTING
   auto triangular = std::get<2>(input);
   auto solution = std::get<3>(input);
-#endif
 
   if (config.print) {
     std::cout << "matrix:" << std::endl;
@@ -105,7 +99,6 @@ int main(int argc, char **argv) {
           config.nbThreadsComputeColumnTask,
           config.nbThreadsUpdateTask);
 
-  choleskyGraph.executeGraph(true);
   choleskyGraph.executeGraph(true);
 
   auto begin = std::chrono::system_clock::now();
@@ -120,35 +113,29 @@ int main(int argc, char **argv) {
             << std::endl;
 
   if (config.print) {
-#ifdef TESTING
     std::cout << "triangular:" << std::endl;
     std::cout << *triangular << std::endl;
-#endif
     std::cout << "found:" << std::endl;
     std::cout << *matrix << std::endl;
     std::cout << "found solution:" << std::endl;
     std::cout << *result << std::endl;
-#ifdef TESTING
     std::cout << "expected solution:" << std::endl;
     std::cout << *solution << std::endl;
-#endif
   }
 
   choleskyGraph.createDotFile(config.dotFile, hh::ColorScheme::EXECUTION,
                                            hh::StructureOptions::QUEUE);
 
-#ifdef TESTING
-  if (!verrifySolution(matrix->width(), matrix->get(), triangular->get(), 1e-3)) {
+  if (!verifySolution(matrix, triangular, 1e-3)) {
     std::cout << "ERROR: wrong decomposition" << std::endl;
   }
-  if (!verrifySolution(result->height(), result->get(), solution->get(), 1e-3)) {
+  if (!verifySolution(result, solution, 1e-3)) {
     std::cout << "ERROR: wrong solution" << std::endl;
   }
-#endif
 
   delete[] matrix->get();
-#ifdef TESTING
   delete[] triangular->get();
-#endif
+  delete[] result->get();
+  delete[] solution->get();
   return 0;
 }

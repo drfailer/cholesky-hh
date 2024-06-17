@@ -24,6 +24,10 @@ class MatrixData {
   [[nodiscard]] size_t width() const { return width_; }
   [[nodiscard]] size_t height() const { return height_; }
 
+  [[nodiscard]] T at(size_t i, size_t j) const {
+    return ptr_[i * width_ + j];
+  }
+
   [[nodiscard]] T *get() { return ptr_; }
 
   friend std::ostream &operator<<(std::ostream &os, const MatrixData &matrix) {

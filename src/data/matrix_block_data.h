@@ -56,6 +56,7 @@ class MatrixBlockData {
 
   [[nodiscard]] size_t rank() const { return rank_; }
   void incRank() { ++rank_; }
+  void decRank() { --rank_; }
   void rank(size_t rank) { rank_ = rank; }
 
   // helper functions to simplify tests

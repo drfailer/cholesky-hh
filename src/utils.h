@@ -20,7 +20,7 @@
 /******************************************************************************/
 
 /// @brief Compute A = L * LT
-template<typename T>
+template <typename T>
 void matrixDotProduct(std::shared_ptr<MatrixData<T>> L, std::shared_ptr<MatrixData<T>> A) {
   for (size_t i = 0; i < L->height(); ++i) {
     for (size_t j = 0; j < L->width(); ++j) {
@@ -32,7 +32,7 @@ void matrixDotProduct(std::shared_ptr<MatrixData<T>> L, std::shared_ptr<MatrixDa
   }
 }
 
-template<typename T>
+template <typename T>
 void generateRandomCholeskyMatrix(std::shared_ptr<MatrixData<T>> matrix,
                                   std::shared_ptr<MatrixData<T>> result) {
   std::random_device dv;
@@ -61,19 +61,33 @@ void generateRandomCholeskyMatrix(std::shared_ptr<MatrixData<T>> matrix,
 /*                               test functions                               */
 /******************************************************************************/
 
-template<typename Type>
-bool verrifySolution(size_t size, Type *founded, Type *expected,
-                     Type precision) {
+template <typename Type>
+bool verifySolution(std::shared_ptr<MatrixData<Type, MatrixTypes::Matrix>> founded,
+                    std::shared_ptr<MatrixData<Type, MatrixTypes::Matrix>> expected,
+                    Type precision) {
   bool output = true;
 
-  for (size_t i = 0; i < size; ++i) {
+  for (size_t i = 0; i < founded->height(); ++i) {
     for (size_t j = 0; j <= i; ++j) {
-      if (!((founded[i * size + j] - precision) <= expected[i * size + j] &&
-            expected[i * size + j] <= (founded[i * size + j] + precision))) {
+      if (!((founded->at(i, j) - precision) <= expected->at(i, j) &&
+            expected->at(i, j) <= (founded->at(i, j) + precision))) {
         output = false;
-        /* std::cout << "Error: " << expected[i * size + j] */
-        /*           << " != " << founded[i * size + j] << std::endl; */
       }
+    }
+  }
+  return output;
+}
+
+template <typename Type>
+bool verifySolution(std::shared_ptr<MatrixData<Type, MatrixTypes::Vector>> founded,
+                    std::shared_ptr<MatrixData<Type, MatrixTypes::Vector>> expected,
+                    Type precision) {
+  bool output = true;
+
+  for (size_t i = 0; i < founded->height(); ++i) {
+    if (!((founded->at(i, 0) - precision) <= expected->at(i, 0) &&
+          expected->at(i, 0) <= (founded->at(i, 0) + precision))) {
+      output = false;
     }
   }
   return output;
