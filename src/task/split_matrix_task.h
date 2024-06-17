@@ -8,9 +8,9 @@
 
 #define SMTaskInNb 2
 #define SMTaskIn MatrixData<T, MatrixTypes::Matrix>, MatrixData<T, MatrixTypes::Vector>
-#define SMTaskOut MatrixBlockData<T, BlockType>
+#define SMTaskOut MatrixBlockData<T, MatrixBlock>, MatrixBlockData<T, VectorBlock>
 
-template <typename T, BlockTypes BlockType>
+template <typename T>
 class SplitMatrixTask
         : public hh::AbstractAtomicTask<SMTaskInNb, SMTaskIn, SMTaskOut > {
  public:
@@ -21,7 +21,7 @@ class SplitMatrixTask
   void execute(std::shared_ptr<MatrixData<T, MatrixTypes::Matrix>> matrix) override {
     for (size_t iBlock = 0; iBlock < matrix->nbBlocksRows(); ++iBlock) {
       for (size_t jBlock = 0; jBlock <= iBlock; ++jBlock) {
-        this->addResult(std::make_shared<MatrixBlockData<T, BlockType>>(
+        this->addResult(std::make_shared<MatrixBlockData<T, MatrixBlock>>(
                 std::min(matrix->blockSize(), matrix->width() - (jBlock * matrix->blockSize())),
                 std::min(matrix->blockSize(), matrix->height() - (iBlock * matrix->blockSize())),
                 matrix->nbBlocksRows(), matrix->nbBlocksCols(),
@@ -34,8 +34,8 @@ class SplitMatrixTask
 
   void execute(std::shared_ptr<MatrixData<T, MatrixTypes::Vector>> vector) override {
     for (size_t iBlock = 0; iBlock < vector->nbBlocksRows(); ++iBlock) {
-      this->addResult(std::make_shared<MatrixBlockData<T, BlockType>>(
-              std::min(vector->blockSize(), vector->width()),
+      this->addResult(std::make_shared<MatrixBlockData<T, VectorBlock>>(
+              1,
               std::min(vector->blockSize(), vector->height() - (iBlock * vector->blockSize())),
               vector->nbBlocksRows(), vector->nbBlocksCols(), 0, iBlock, vector->width(),
               vector->height(), vector->get() + iBlock * vector->blockSize() * vector->width(),
