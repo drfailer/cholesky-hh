@@ -9,27 +9,26 @@
 #include "../state/solver/solver_state_manager.h"
 #include <hedgehog/hedgehog.h>
 
-#define CSGraphInNb 2
-#define CSGraphIn MatrixData<T, MatrixTypes::Vector>, MatrixBlockData<T, Result>
-#define CSGraphOut MatrixBlockData<T, Result>
+#define CSGraphInNb 3
+#define CSGraphIn                        \
+  MatrixBlockData<T, VectorBlock>,       \
+  MatrixBlockData<T, VectorBlockPhase1>, \
+  MatrixBlockData<T, Decomposed>
+#define CSGraphOut MatrixBlockData<T, VectorBlockPhase1>, MatrixBlockData<T, Result>
 
-template<typename T>
+template<typename T, Phases Phase>
 class CholeskySolverGraph
         : public hh::Graph<CSGraphInNb, CSGraphIn, CSGraphOut > {
  public:
   CholeskySolverGraph()
           : hh::Graph<CSGraphInNb, CSGraphIn, CSGraphOut >(
           "Cholesky Decomposition") {
-    auto splitMatrixTask = std::make_shared<SplitMatrixTask<T, Block>>();
-    auto solveDiagonalTask = std::make_shared<SolveDiagonalTask<T>>(1);
-    auto updateVectorTask = std::make_shared<UpdateVectorTask<T>>(10);
-    auto solverState = std::make_shared<SolverState<T>>();
-    auto solverStateManager = std::make_shared<SolverStateManager<T>>(solverState);
+    auto solveDiagonalTask = std::make_shared<SolveDiagonalTask<T, Phase>>(1);
+    auto updateVectorTask = std::make_shared<UpdateVectorTask<T, Phase>>(10);
+    auto solverState = std::make_shared<SolverState<T, Phase>>();
+    auto solverStateManager = std::make_shared<SolverStateManager<T, Phase>>(solverState);
 
-    this->inputs(splitMatrixTask);
     this->inputs(solverStateManager);
-
-    this->edges(splitMatrixTask, solverStateManager);
 
     this->edges(solverStateManager, solveDiagonalTask);
     this->edges(solveDiagonalTask, solverStateManager);
