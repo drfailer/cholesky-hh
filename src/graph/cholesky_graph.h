@@ -18,20 +18,26 @@ class CholeskyGraph
   CholeskyGraph(size_t nbThreadsComputeDiagonalTask,
                 size_t nbThreadsComputeColumnTask,
                 size_t nbThreadsUpdateTask)
-          : hh::Graph<CGraphInNb, CGraphIn, CGraphOut >(
-          "Cholesky") {
+          : hh::Graph<CGraphInNb, CGraphIn, CGraphOut >("Cholesky") {
+    auto splitTask = std::make_shared<SplitMatrixTask<T>>();
     auto choleskyDecompositionGraph = std::make_shared<CholeskyDecompositionGraph<T>>(
             nbThreadsComputeDiagonalTask,
             nbThreadsComputeColumnTask,
             nbThreadsUpdateTask);
-    auto choleskySolverGraph = std::make_shared<CholeskySolverGraph<T>>();
+    auto choleskySolverGraph1 = std::make_shared<CholeskySolverGraph<T, Phases::First>>();
+    auto choleskySolverGraph2 = std::make_shared<CholeskySolverGraph<T, Phases::Second>>();
 
-    this->inputs(choleskyDecompositionGraph);
-    this->inputs(choleskySolverGraph);
+    this->inputs(splitTask);
 
-    this->edges(choleskyDecompositionGraph, choleskySolverGraph);
+    this->edges(splitTask, choleskyDecompositionGraph);
+    this->edges(splitTask, choleskySolverGraph1);
+    this->edges(splitTask, choleskySolverGraph2);
 
-    this->outputs(choleskySolverGraph);
+    this->edges(choleskySolverGraph1, choleskySolverGraph2);
+    this->edges(choleskyDecompositionGraph, choleskySolverGraph1);
+    this->edges(choleskyDecompositionGraph, choleskySolverGraph2);
+
+    this->outputs(choleskySolverGraph2);
   }
 };
 
