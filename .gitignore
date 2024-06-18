@@ -4,5 +4,3 @@ src/compile_commands.json
 .idea
 cmake-build-debug
 src/.gdb_history
-scripts/repport*
-scripts/result*
