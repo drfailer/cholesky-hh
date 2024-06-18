@@ -81,10 +81,10 @@ int main(int argc, char **argv) {
 
 #ifdef TESTING
   if (!verifySolution(matrix, triangular, 1e-3)) {
-    std::cout << "ERROR: wrong decomposition" << std::endl;
+    std::cerr << "ERROR: wrong decomposition" << std::endl;
   }
   if (!verifySolution(result, solution, 1e-3)) {
-    std::cout << "ERROR: wrong solution" << std::endl;
+    std::cerr << "ERROR: wrong solution" << std::endl;
   }
 #endif
 
