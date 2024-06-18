@@ -31,6 +31,10 @@ void parseCmdArgs(int argc, char **argv, Config &config) {
     cmd.add(nbThreadsUpdateArg);
     TCLAP::ValueArg<size_t> nbThreadsComputeDiagonalArg("d", "diagonal", "Number of threads for the compute diagonal task.", false, 1, &sc);
     cmd.add(nbThreadsComputeDiagonalArg);
+    TCLAP::ValueArg<size_t> nbThreadsSolveDiagonalArg("s", "solDiag", "Number of threads for the solve diagonal task.", false, 1, &sc);
+    cmd.add(nbThreadsSolveDiagonalArg);
+    TCLAP::ValueArg<size_t> nbThreadsUpdateVectorArg("v", "upVec", "Number of threads for the update vector task.", false, 4, &sc);
+    cmd.add(nbThreadsUpdateVectorArg);
     TCLAP::ValueArg<bool> printArg("p", "print", "print", false, false, "bool");
     cmd.add(printArg);
     cmd.parse(argc, argv);
@@ -41,6 +45,8 @@ void parseCmdArgs(int argc, char **argv, Config &config) {
     config.nbThreadsComputeColumnTask = nbThreadsComputeColumnArg.getValue();
     config.nbThreadsUpdateTask = nbThreadsUpdateArg.getValue();
     config.nbThreadsComputeDiagonalTask = nbThreadsComputeDiagonalArg.getValue();
+    config.nbThreadsSolveDiagonal = nbThreadsSolveDiagonalArg.getValue();
+    config.nbThreadsUpdateVector = nbThreadsUpdateVectorArg.getValue();
     config.print = printArg.getValue();
   } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }

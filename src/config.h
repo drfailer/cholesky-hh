@@ -9,6 +9,8 @@ struct Config {
   size_t nbThreadsComputeDiagonalTask;
   size_t nbThreadsComputeColumnTask;
   size_t nbThreadsUpdateTask;
+  size_t nbThreadsSolveDiagonal;
+  size_t nbThreadsUpdateVector;
   bool print;
 };
 

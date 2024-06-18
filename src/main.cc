@@ -77,6 +77,8 @@ int main(int argc, char **argv) {
           .nbThreadsComputeDiagonalTask = 1,
           .nbThreadsComputeColumnTask = 4,
           .nbThreadsUpdateTask = 4,
+          .nbThreadsSolveDiagonal = 1,
+          .nbThreadsUpdateVector = 4,
           .print = false
   };
 
@@ -97,7 +99,9 @@ int main(int argc, char **argv) {
   CholeskyGraph<MatrixType> choleskyGraph(
           config.nbThreadsComputeDiagonalTask,
           config.nbThreadsComputeColumnTask,
-          config.nbThreadsUpdateTask);
+          config.nbThreadsUpdateTask,
+          config.nbThreadsSolveDiagonal,
+          config.nbThreadsUpdateVector);
 
   choleskyGraph.executeGraph(true);
 
