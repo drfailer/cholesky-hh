@@ -38,8 +38,8 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
     }
 
     blocks_[block->idx()] = std::make_shared<MatrixBlockData<T, MatrixBlock>>(block);
-    sendSolveDiagPendings();
-    sendUpdatePendings();
+    sendSolveDiagPending();
+    sendUpdatePending();
   }
 
   /* VectorBlock **************************************************************/
@@ -55,13 +55,13 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
       vectorBlocks_[vecBlock->idx()] = std::make_shared<MatrixBlockData<T, Vector>>(vecBlock);
 
       if (vecBlock->rank() == vecBlock->y()) {
-        solveDiagPendings_.emplace_back(SolveDiagonalIdx(
+        solveDiagPending_.emplace_back(SolveDiagonalIdx(
                 vecBlock->y() * nbBlocksCols_ + vecBlock->y(),
                 vecBlock->idx()
         ));
       }
-      sendSolveDiagPendings();
-      sendUpdatePendings();
+      sendSolveDiagPending();
+      sendUpdatePending();
     }
   }
 
@@ -79,13 +79,13 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
       vectorBlocks_[vecBlock->idx()] = std::make_shared<MatrixBlockData<T, Vector>>(vecBlock);
 
       if (vecBlock->rank() == 1) {
-        solveDiagPendings_.emplace_back(SolveDiagonalIdx(
+        solveDiagPending_.emplace_back(SolveDiagonalIdx(
                 vecBlock->y() * nbBlocksCols_ + vecBlock->y(),
                 vecBlock->idx()
         ));
       }
-      sendSolveDiagPendings();
-      sendUpdatePendings();
+      sendSolveDiagPending();
+      sendUpdatePending();
     }
   }
 
@@ -94,33 +94,26 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
   /// @brief Receives vector blocks from the solve diagonal task (these are results of the graph)
   void execute(std::shared_ptr<MatrixBlockData<T, Vector>> block) override {
     if constexpr (Phase == Phases::First) {
-     vectorBlocks_[block->idx()]->incRank();
+      vectorBlocks_[block->idx()]->incRank();
 
+      // update all the blocks beneath
       for (size_t i = block->y() + 1; i < nbBlocksRows_; ++i) {
         size_t colBlockIdx = i * nbBlocksCols_ + block->y();
-        updateVecPendings_.emplace_back(UpdateVectorIdx(
-                colBlockIdx,
-                block->idx(),
-                i
-        ));
+        updateVecPending_.emplace_back(UpdateVectorIdx(colBlockIdx, block->idx(), i));
       }
-
       this->addResult(std::make_shared<MatrixBlockData<T, VectorBlockPhase1>>(block));
     } else {
       vectorBlocks_[block->idx()]->decRank();
 
+      // update all the blocks above
       for (size_t i = 0; i < block->y(); ++i) {
-        size_t colBlockIdx = block->y() * nbBlocksCols_ + i; // we invert because the matrix should be translated
-        updateVecPendings_.emplace_back(UpdateVectorIdx(
-                colBlockIdx,
-                block->idx(),
-                i
-        ));
+        size_t colBlockIdx =
+                block->y() * nbBlocksCols_ + i; // we invert because the matrix should be translated
+        updateVecPending_.emplace_back(UpdateVectorIdx(colBlockIdx, block->idx(), i));
       }
-
-     this->addResult(std::make_shared<MatrixBlockData<T, Result>>(block));
+      this->addResult(std::make_shared<MatrixBlockData<T, Result>>(block));
     }
-    sendUpdatePendings();
+    sendUpdatePending();
   }
 
   /* Updated ******************************************************************/
@@ -128,28 +121,26 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
   /// @brief Receives vector blocs from the update vector task.
   void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
     if constexpr (Phase == Phases::First) {
-      vectorBlocks_[block->idx()]->incRank();
-      block->incRank();
+      size_t rank = vectorBlocks_[block->idx()]->incRank();
 
-      if (block->rank() == block->y()) {
-        solveDiagPendings_.emplace_back(SolveDiagonalIdx(
+      if (rank == block->y()) {
+        solveDiagPending_.emplace_back(SolveDiagonalIdx(
                 block->y() * nbBlocksCols_ + block->y(),
                 block->idx()
         ));
       }
     } else {
-      vectorBlocks_[block->idx()]->decRank();
-      block->decRank();
+      size_t rank = vectorBlocks_[block->idx()]->decRank();
 
-      if (block->rank() == 1) {
-        solveDiagPendings_.emplace_back(SolveDiagonalIdx(
+      if (rank == 1) {
+        solveDiagPending_.emplace_back(SolveDiagonalIdx(
                 block->y() * nbBlocksCols_ + block->y(),
                 block->idx()
         ));
       }
     }
 
-    sendSolveDiagPendings();
+    sendSolveDiagPending();
   }
 
   /* idDone ******************************************************************/
@@ -164,6 +155,9 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
   }
 
  private:
+
+  /* Types *******************************************************************/
+
   struct SolveDiagonalIdx {
     SolveDiagonalIdx(size_t diag, size_t vec) :
             diag(diag), vec(vec) {}
@@ -179,17 +173,22 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
     size_t updatedVec; // the part of the vector that we want to update
   };
 
+  /* Variables ***************************************************************/
+
   std::vector<std::shared_ptr<MatrixBlockData<T, MatrixBlock>>> blocks_ = {};
   std::vector<std::shared_ptr<MatrixBlockData<T, Vector>>> vectorBlocks_ = {};
-  std::list<SolveDiagonalIdx> solveDiagPendings_ = {};
-  std::list<UpdateVectorIdx> updateVecPendings_ = {};
+  std::list<SolveDiagonalIdx> solveDiagPending_ = {};
+  std::list<UpdateVectorIdx> updateVecPending_ = {};
   size_t nbBlocksCols_ = 0;
   size_t nbBlocksRows_ = 0;
 
-  void sendUpdatePendings() {
-    auto it = updateVecPendings_.begin();
+  /* Send functions **********************************************************/
 
-    while (it != updateVecPendings_.end()) {
+  /// @brief Send all pending triplet to update if all the blocks are ready
+  void sendUpdatePending() {
+    auto it = updateVecPending_.begin();
+
+    while (it != updateVecPending_.end()) {
       auto col = blocks_[it->col];
       auto solvedVec = vectorBlocks_[it->solvedVec];
       auto updatedVec = vectorBlocks_[it->updatedVec];
@@ -199,7 +198,7 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
                 std::make_shared<MatrixBlockData<T, Column>>(col),
                 solvedVec,
                 updatedVec));
-        it = updateVecPendings_.erase(it);
+        it = updateVecPending_.erase(it);
       } else {
         it++;
       }
@@ -207,14 +206,15 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
   }
 
 
-  void sendSolveDiagPendings() {
+  /// @brief Send all the pending diagonal blocks to update if they are ready
+  void sendSolveDiagPending() {
     if (blocks_.empty()) {
       return;
     }
 
-    auto it = solveDiagPendings_.begin();
+    auto it = solveDiagPending_.begin();
 
-    while (it != solveDiagPendings_.end()) {
+    while (it != solveDiagPending_.end()) {
       auto diag = blocks_[it->diag];
       auto vec = vectorBlocks_[it->vec];
 
@@ -222,7 +222,7 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
         this->addResult(std::make_shared<SolveDiagonalTaskInType<T>>(
                 std::make_shared<MatrixBlockData<T, Diagonal>>(diag),
                 vec));
-        it = solveDiagPendings_.erase(it);
+        it = solveDiagPending_.erase(it);
       } else {
         it++;
       }
