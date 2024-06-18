@@ -37,7 +37,6 @@ class CholeskyGraph
 
     this->edges(splitTask, choleskyDecompositionGraph);
     this->edges(splitTask, choleskySolverGraph1);
-    this->edges(splitTask, choleskySolverGraph2);
 
     this->edges(choleskySolverGraph1, choleskySolverGraph2);
     this->edges(choleskyDecompositionGraph, choleskySolverGraph1);
