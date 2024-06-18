@@ -22,7 +22,9 @@ class CholeskySolverGraph
         : public hh::Graph<CSGraphInNb, CSGraphIn, CSGraphOut > {
  public:
   CholeskySolverGraph(size_t nbThreadsSolveDiagonal, size_t nbThreadsUpdateVector)
-          : hh::Graph<CSGraphInNb, CSGraphIn, CSGraphOut >("Cholesky Solver") {
+          : hh::Graph<CSGraphInNb, CSGraphIn, CSGraphOut >(Phase == Phases::First
+                                                           ? "Cholesky Solver phase 1"
+                                                           : "Cholesky Solver phase 2") {
     auto solveDiagonalTask = std::make_shared<SolveDiagonalTask<T, Phase>>(nbThreadsSolveDiagonal);
     auto updateVectorTask = std::make_shared<UpdateVectorTask<T, Phase>>(nbThreadsUpdateVector);
     auto solverState = std::make_shared<SolverState<T, Phase>>();
