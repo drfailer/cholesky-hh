@@ -8,8 +8,10 @@
 #include "../../task/decomposition/update_submatrix_block_task.h"
 
 #define USMStateInNb 3
-#define USMStateIn MatrixBlockData<T, MatrixBlock>, MatrixBlockData<T, Column>, MatrixBlockData<T, Updated>
-
+#define USMStateIn                 \
+  MatrixBlockData<T, MatrixBlock>, \
+  MatrixBlockData<T, Column>,      \
+  MatrixBlockData<T, Updated>
 #define USMStateOut UpdateSubmatrixBlockInputType<T>
 
 template <typename T>

@@ -12,11 +12,12 @@
   MatrixBlockData<T, Diagonal>,    \
   MatrixBlockData<T, Column>,      \
   MatrixBlockData<T, Updated>
-#define DStateOut               \
-  MatrixBlockData<T, Diagonal>, \
-  MatrixBlockData<T, Column>,   \
-  CCBTaskInputType<T>,          \
-  MatrixBlockData<T, Updated>,  \
+#define DStateOut                  \
+  MatrixBlockData<T, MatrixBlock>, \
+  MatrixBlockData<T, Diagonal>,    \
+  MatrixBlockData<T, Column>,      \
+  CCBTaskInputType<T>,             \
+  MatrixBlockData<T, Updated>,     \
   MatrixBlockData<T, Decomposed>
 
 template <typename T>
@@ -37,15 +38,8 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
     blocks_[block->y() * nbBlocksRows_ + block->x()] = block;
     --blocksTtl_;
 
-    if (block->isReady()) {
-      if (block->isDiag()) {
-        this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
-      } else if (blocks_[block->diagIdx()]->isProcessed()) {
-        this->addResult(std::make_shared<CCBTaskInputType<T>>(
-                std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_[block->diagIdx()]),
-                block));
-      } // else the block will be treated when the diag element is received
-    }
+    this->addResult(block); // send the block to the update state
+    tryProcessBlock(block); // start early computation if possible
   }
 
   /* Diagonal *****************************************************************/
@@ -84,26 +78,15 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
   /// updated, we start a new column.
   void execute(std::shared_ptr<MatrixBlockData<T, Updated>> block) override {
     blocks_[block->idx()]->incRank();
-    block->incRank();
 
-    if (block->isReady()) {
-      if (block->isDiag()) {
-        this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
-      } else if (blocks_[block->diagIdx()]->isProcessed()) {
-        this->addResult(std::make_shared<CCBTaskInputType<T>>(
-                std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_[block->diagIdx()]),
-                blocks_[block->idx()]));
-      } // else the block will be treated when the diag element is received
-    }
-
-    // we may have to notify the update state
-    this->addResult(block);
+    tryProcessBlock(blocks_[block->idx()]);
+    this->addResult(block); // we may have to notify the update state
   }
 
   /* idDone ******************************************************************/
 
   [[nodiscard]] bool isDone() const {
-    return blocks_.size() && blocks_.back() && blocks_.back()->isProcessed();
+    return !blocks_.empty() && blocks_.back() && blocks_.back()->isProcessed();
   }
 
  private:
@@ -119,6 +102,18 @@ class DecomposeState : public hh::AbstractState<DStateInNb, DStateIn, DStateOut 
     nbBlocksCols_ = nbBlocksCols;
     blocks_ = std::vector<std::shared_ptr<MatrixBlockData<T, MatrixBlock>>>(
             nbBlocksRows_ * nbBlocksCols_, nullptr);
+  }
+
+  void tryProcessBlock(std::shared_ptr<MatrixBlockData<T, MatrixBlock>> &block) {
+    if (block->isReady()) {
+      if (block->isDiag()) {
+        this->addResult(std::make_shared<MatrixBlockData<T, Diagonal>>(block));
+      } else if (blocks_[block->diagIdx()]->isProcessed()) {
+        this->addResult(std::make_shared<CCBTaskInputType<T>>(
+                std::make_shared<MatrixBlockData<T, Diagonal>>(blocks_[block->diagIdx()]),
+                block));
+      } // else the block will be treated when the diag element is received
+    }
   }
 };
 

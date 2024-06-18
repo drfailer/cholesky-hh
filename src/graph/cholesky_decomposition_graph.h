@@ -35,14 +35,12 @@ class CholeskyDecompositionGraph
             updateSubMatrixState);
 
     this->inputs(decomposeStateManager);
-    this->inputs(updateSubMatrixStateManager);
 
     this->edges(decomposeStateManager, computeDiagonalBlockTask);
     this->edges(computeDiagonalBlockTask, decomposeStateManager);
     this->edges(decomposeStateManager, computeColumnBlockTask);
     this->edges(computeColumnBlockTask, decomposeStateManager);
 
-    /* this->edges(computeColumnBlockTask, updateSubMatrixStateManager); */
     this->edges(decomposeStateManager, updateSubMatrixStateManager);
 
     this->edges(updateSubMatrixStateManager, updateSubMatrixBlockTask);

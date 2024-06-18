@@ -1,6 +1,6 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
-//#define TESTING
+#define TESTING
 
 #include "data/matrix_data.h"
 #include "config.h"
