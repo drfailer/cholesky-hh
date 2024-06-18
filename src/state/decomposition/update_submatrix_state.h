@@ -3,9 +3,9 @@
 
 #include <vector>
 #include <list>
-#include <hedgehog/hedgehog.h>
-#include "../data/matrix_block_data.h"
-#include "../task/update_submatrix_block_task.h"
+#include "hedgehog/hedgehog/hedgehog.h"
+#include "../../data/matrix_block_data.h"
+#include "../../task/decomposition/update_submatrix_block_task.h"
 
 #define USMStateInNb 3
 #define USMStateIn MatrixBlockData<T, MatrixBlock>, MatrixBlockData<T, Column>, MatrixBlockData<T, Updated>

@@ -1,9 +1,9 @@
 #ifndef CHOLESKY_HH_COMPUTE_COLUMN_BLOCK_TASK_H
 #define CHOLESKY_HH_COMPUTE_COLUMN_BLOCK_TASK_H
 
-#include <hedgehog/hedgehog.h>
+#include "hedgehog/hedgehog/hedgehog.h"
 #include <cblas.h>
-#include "../data/matrix_block_data.h"
+#include "../../data/matrix_block_data.h"
 
 template<typename T>
 using CCBTaskInputType =

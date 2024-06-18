@@ -1,9 +1,9 @@
 #ifndef DECOMPOSE_STATE_H
 #define DECOMPOSE_STATE_H
 
-#include "../data/matrix_block_data.h"
-#include "../task/compute_column_block_task.h"
-#include <hedgehog/hedgehog.h>
+#include "../../data/matrix_block_data.h"
+#include "../../task/decomposition/compute_column_block_task.h"
+#include "hedgehog/hedgehog/hedgehog.h"
 #include <vector>
 
 #define DStateInNb 4

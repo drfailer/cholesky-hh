@@ -2,7 +2,7 @@
 #define CHOLESKY_HH_UPDATE_SUBMATRIX_STATE_MANAGER_H
 
 #include "update_submatrix_state.h"
-#include <hedgehog/hedgehog.h>
+#include "hedgehog/hedgehog/hedgehog.h"
 
 template <typename T>
 class UpdateSubMatrixStateManager

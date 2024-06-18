@@ -2,14 +2,14 @@
 #define CHOLESKY_DECOMPOSITION_GRAPH_H
 #include "../data/matrix_block_data.h"
 #include "../data/matrix_data.h"
-#include "../state/decompose_state.h"
-#include "../state/decompose_state_manager.h"
-#include "../state/update_submatrix_state.h"
-#include "../state/update_submatrix_state_manager.h"
-#include "../task/split_matrix_task.h"
-#include "../task/compute_diagonal_block_task.h"
-#include "../task/compute_column_block_task.h"
-#include "../task/update_submatrix_block_task.h"
+#include "../state/decomposition/decompose_state.h"
+#include "../state/decomposition/decompose_state_manager.h"
+#include "../state/decomposition/update_submatrix_state.h"
+#include "../state/decomposition/update_submatrix_state_manager.h"
+#include "../task/decomposition/split_matrix_task.h"
+#include "../task/decomposition/compute_diagonal_block_task.h"
+#include "../task/decomposition/compute_column_block_task.h"
+#include "../task/decomposition/update_submatrix_block_task.h"
 #include <hedgehog/hedgehog.h>
 
 #define CDGraphInNb 1

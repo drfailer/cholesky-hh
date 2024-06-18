@@ -1,7 +1,7 @@
 #ifndef DECOMPOSE_STATE_MANAGER_H
 #define DECOMPOSE_STATE_MANAGER_H
 #include "decompose_state.h"
-#include <hedgehog/hedgehog.h>
+#include "hedgehog/hedgehog/hedgehog.h"
 
 template <typename T>
 class DecomposeStateManager

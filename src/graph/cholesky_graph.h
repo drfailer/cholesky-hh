@@ -17,15 +17,21 @@ class CholeskyGraph
  public:
   CholeskyGraph(size_t nbThreadsComputeDiagonalTask,
                 size_t nbThreadsComputeColumnTask,
-                size_t nbThreadsUpdateTask)
+                size_t nbThreadsUpdateTask,
+                size_t nbThreadsSolveDiagonal,
+                size_t nbThreadsUpdateVector)
           : hh::Graph<CGraphInNb, CGraphIn, CGraphOut >("Cholesky") {
     auto splitTask = std::make_shared<SplitMatrixTask<T>>();
     auto choleskyDecompositionGraph = std::make_shared<CholeskyDecompositionGraph<T>>(
             nbThreadsComputeDiagonalTask,
             nbThreadsComputeColumnTask,
             nbThreadsUpdateTask);
-    auto choleskySolverGraph1 = std::make_shared<CholeskySolverGraph<T, Phases::First>>();
-    auto choleskySolverGraph2 = std::make_shared<CholeskySolverGraph<T, Phases::Second>>();
+    auto choleskySolverGraph1 =
+            std::make_shared<CholeskySolverGraph<T, Phases::First>>(
+                    nbThreadsSolveDiagonal, nbThreadsUpdateVector);
+    auto choleskySolverGraph2 =
+            std::make_shared<CholeskySolverGraph<T, Phases::Second>>(
+                    nbThreadsSolveDiagonal, nbThreadsUpdateVector);
 
     this->inputs(splitTask);
 

@@ -1,9 +1,9 @@
 #ifndef CHOLESKY_HH_COMPUTE_DIAGONAL_BLOCK_TASK_H
 #define CHOLESKY_HH_COMPUTE_DIAGONAL_BLOCK_TASK_H
 
-#include <hedgehog/hedgehog.h>
+#include "hedgehog/hedgehog/hedgehog.h"
 #include <lapack.h>
-#include "../data/matrix_block_data.h"
+#include "../../data/matrix_block_data.h"
 
 #define CDBTaskInNb 1
 #define CDBTaskIn MatrixBlockData<T, Diagonal>
