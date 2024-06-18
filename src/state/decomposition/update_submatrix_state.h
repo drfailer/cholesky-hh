@@ -12,7 +12,7 @@
 
 #define USMStateOut UpdateSubmatrixBlockInputType<T>
 
-template<typename T>
+template <typename T>
 class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, USMStateOut > {
  public:
   UpdateSubMatrixState() :
@@ -34,7 +34,7 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
     --blocksTtl_;
 
     if (blocksTtl_ == 0) {
-      processPendings();
+      processPending();
     }
   }
 
@@ -48,16 +48,16 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
       size_t col2Idx = col->idx();
       size_t updatedIdx = i * nbBlocksCols_ + col->y();
 
-      pendings_.emplace_back(TripleIndex(col1Idx, col2Idx, updatedIdx));
+      pending_.emplace_back(TripleIndex(col1Idx, col2Idx, updatedIdx));
     }
-    processPendings();
+    processPending();
   }
 
   /* Updated ******************************************************************/
 
   /// @brief Receives updated blocks from decompose state
   void execute(std::shared_ptr<MatrixBlockData<T, Updated>>) override {
-    processPendings();
+    processPending();
   }
 
   /* isDone *******************************************************************/
@@ -67,22 +67,30 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
   }
 
  private:
+
+  /* Types ********************************************************************/
+
   struct TripleIndex {
-    TripleIndex(size_t col1Idx, size_t col2Idx, size_t updateIdx):
-      col1Idx(col1Idx), col2Idx(col2Idx), updateIdx(updateIdx) {}
+    TripleIndex(size_t col1Idx, size_t col2Idx, size_t updateIdx) :
+            col1Idx(col1Idx), col2Idx(col2Idx), updateIdx(updateIdx) {}
     size_t col1Idx;
     size_t col2Idx;
     size_t updateIdx;
   };
+
+  /* Variables ****************************************************************/
+
   std::vector<std::shared_ptr<MatrixBlockData<T, MatrixBlock>>> blocks_ = {};
-  std::list<TripleIndex> pendings_ = {};
+  std::list<TripleIndex> pending_ = {};
   size_t blocksTtl_ = 0;
   size_t nbBlocksCols_ = 0;
 
-  void processPendings() {
-    auto it = pendings_.begin();
+  /* Process function *********************************************************/
 
-    while (it != pendings_.end()) {
+  void processPending() {
+    auto it = pending_.begin();
+
+    while (it != pending_.end()) {
       auto col1 = blocks_[it->col1Idx];
       auto col2 = blocks_[it->col2Idx];
       auto updated = blocks_[it->updateIdx];
@@ -92,7 +100,7 @@ class UpdateSubMatrixState : public hh::AbstractState<USMStateInNb, USMStateIn, 
 
       if (col1Processed && col2Processed && updatedReady) {
         this->addResult(std::make_shared<TripleBlockData<T>>(col1, col2, updated));
-        it = pendings_.erase(it);
+        it = pending_.erase(it);
       } else {
         it++;
       }
