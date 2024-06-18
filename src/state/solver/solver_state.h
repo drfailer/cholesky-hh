@@ -141,6 +141,7 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
     }
 
     sendSolveDiagPending();
+    sendUpdatePending();
   }
 
   /* idDone ******************************************************************/
@@ -192,8 +193,15 @@ class SolverState : public hh::AbstractState<SStateInNb, SStateIn, SStateOut > {
       auto col = blocks_[it->col];
       auto solvedVec = vectorBlocks_[it->solvedVec];
       auto updatedVec = vectorBlocks_[it->updatedVec];
+      bool isReady;
 
-      if (col && updatedVec) {
+      if constexpr (Phase == Phases::First) {
+        isReady = updatedVec && updatedVec->rank() == (solvedVec->rank() - 1);
+      } else {
+        isReady = updatedVec && updatedVec->rank() == (solvedVec->y() - updatedVec->y() + 1);
+      }
+
+      if (col && isReady) {
         this->addResult(std::make_shared<UpdateVectorTaskInType<T>>(
                 std::make_shared<MatrixBlockData<T, Column>>(col),
                 solvedVec,
