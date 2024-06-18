@@ -1,64 +1,19 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
+//#define TESTING
 
 #include "data/matrix_data.h"
+#include "config.h"
+#include <fstream>
+#include <memory>
 #include <chrono>
 #include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <random>
 
-#define timerStart() auto _start = std::chrono::system_clock::now();
-#define timerEnd() auto _end = std::chrono::system_clock::now();
-#define timerCount()                                                           \
-  std::chrono::duration_cast<std::chrono::microseconds>(_end - _start)         \
-          .count() /                                                           \
-      1.0e6
-
 /******************************************************************************/
-/*                              generate problem                              */
-/******************************************************************************/
-
-/// @brief Compute A = L * LT
-template <typename T>
-void matrixDotProduct(std::shared_ptr<MatrixData<T>> L, std::shared_ptr<MatrixData<T>> A) {
-  for (size_t i = 0; i < L->height(); ++i) {
-    for (size_t j = 0; j < L->width(); ++j) {
-      for (size_t k = 0; k < L->height(); ++k) {
-        A->get()[i * A->width() + j] +=
-                L->get()[i * L->width() + k] * L->get()[j * L->width() + k];
-      }
-    }
-  }
-}
-
-template <typename T>
-void generateRandomCholeskyMatrix(std::shared_ptr<MatrixData<T>> matrix,
-                                  std::shared_ptr<MatrixData<T>> result) {
-  std::random_device dv;
-  std::mt19937 gen(dv());
-  /* std::uniform_real_distribution<> dis(-10, 10); */
-  std::uniform_int_distribution<> dis(0, 10);
-
-  memset(matrix->get(), 0, sizeof(T) * matrix->height() * matrix->width());
-  memset(result->get(), 0, sizeof(T) * result->height() * result->width());
-  for (size_t i = 0; i < matrix->height(); ++i) {
-    for (size_t j = 0; j <= i; ++j) {
-      T value = dis(gen);
-      if (value == 0)
-        value++; // make sure we don't have 0 on the diagonal
-      result->get()[i * matrix->width() + j] = value;
-    }
-  }
-
-  T *resultTMem = new T[matrix->height() * matrix->width()];
-  auto resultT = std::make_shared<MatrixData<T>>(matrix->height(), matrix->width(), 1, resultTMem);
-  matrixDotProduct(result, matrix);
-  delete[] resultTMem;
-}
-
-/******************************************************************************/
-/*                               test functions                               */
+/* test functions                                                             */
 /******************************************************************************/
 
 template <typename Type>
@@ -91,6 +46,79 @@ bool verifySolution(std::shared_ptr<MatrixData<Type, MatrixTypes::Vector>> found
     }
   }
   return output;
+}
+
+/******************************************************************************/
+/* init                                                                       */
+/******************************************************************************/
+
+template <typename T>
+struct InitType {
+  using Matrix = std::shared_ptr<MatrixData<T, MatrixTypes::Matrix>>;
+  using Vector = std::shared_ptr<MatrixData<T, MatrixTypes::Vector>>;
+
+  InitType(Matrix inputMatrix,
+           Vector resultVector,
+           Matrix triangularMatrix = nullptr,
+           Vector solutionVector = nullptr) :
+          inputMatrix(inputMatrix),
+          resultVector(resultVector),
+          triangularMatrix(triangularMatrix),
+          solutionVector(solutionVector) {}
+
+  Matrix inputMatrix = nullptr;
+  Vector resultVector = nullptr;
+  Matrix triangularMatrix = nullptr;
+  Vector solutionVector = nullptr;
+};
+
+template <typename T>
+InitType<T> initMatrix(Config const &config) {
+  std::ifstream fs(config.inputFile, std::ios::binary);
+  size_t width, height;
+
+  // read the size of the matrix
+  fs.read(reinterpret_cast<char *>(&width), sizeof(width));
+  fs.read(reinterpret_cast<char *>(&height), sizeof(height));
+
+  auto matrix = std::make_shared<MatrixData<T, MatrixTypes::Matrix>>(
+          width, height, config.blockSize, new T[width * height]());
+  auto result = std::make_shared<MatrixData<T, MatrixTypes::Vector>>(
+          1, height, config.blockSize, new T[height]());
+#ifdef TESTING
+  auto triangular = std::make_shared<MatrixData<T, MatrixTypes::Matrix>>(
+          width, height, config.blockSize, new T[width * height]());
+  auto solution = std::make_shared<MatrixData<T, MatrixTypes::Vector>>(
+          1, height, config.blockSize, new T[height]());
+#endif
+
+  // read the symmetric matrix
+  for (size_t i = 0; i < width * height; ++i) {
+    fs.read(reinterpret_cast<char *>(matrix->get() + i), sizeof(matrix->get()[i]));
+  }
+
+  // read the result vector
+  for (size_t i = 0; i < height; ++i) {
+    fs.read(reinterpret_cast<char *>(result->get() + i), sizeof(result->get()[i]));
+  }
+
+#ifdef TESTING
+  // read the expected triangular matrix
+  for (size_t i = 0; i < width * height; ++i) {
+    fs.read(reinterpret_cast<char *>(triangular->get() + i), sizeof(triangular->get()[i]));
+  }
+
+  // read the solution vector
+  for (size_t i = 0; i < height; ++i) {
+    fs.read(reinterpret_cast<char *>(solution->get() + i), sizeof(solution->get()[i]));
+  }
+#endif
+
+#ifdef TESTING
+  return InitType(matrix, result, triangular, solution);
+#else
+  return InitType(matrix, result);
+#endif
 }
 
 #endif
