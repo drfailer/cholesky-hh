@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <hedgehog/hedgehog.h>
+#include <memory>
 #include "matrix_types.h"
 
 template<typename T, MatrixTypes MT = MatrixTypes::Matrix>
@@ -30,12 +31,24 @@ class MatrixData {
 
   [[nodiscard]] T *get() { return ptr_; }
 
-  friend std::ostream &operator<<(std::ostream &os, const MatrixData &matrix) {
-    for (size_t i = 0; i < matrix.height(); ++i) {
-      for (size_t j = 0; j < matrix.width(); ++j) {
-        os << matrix.ptr_[i * matrix.width() + j] << " ";
+  void reset(const std::shared_ptr<MatrixData<T, MT>> &matrix) {
+    size_t size = matrix->width_ * matrix->height_;
+
+    for (size_t i = 0;  i < size; ++i) {
+      this->ptr_[i] = matrix->get()[i];
+    }
+  }
+
+  friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<MatrixData<T, MT>> &matrix) {
+    if (matrix == nullptr) {
+      os << "nullptr" << std::endl;
+    } else {
+      for (size_t i = 0; i < matrix->height(); ++i) {
+        for (size_t j = 0; j < matrix->width(); ++j) {
+          os << matrix->ptr_[i * matrix->width() + j] << " ";
+        }
+        os << std::endl;
       }
-      os << std::endl;
     }
     return os;
   }
