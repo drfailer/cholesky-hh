@@ -10,6 +10,10 @@
 #include <vector>
 #define NB_MEASURES 5
 
+/******************************************************************************/
+/* parameters                                                                 */
+/******************************************************************************/
+
 using MatrixType = double;
 
 std::vector<ThreadsConfig> threadsConfigs = {
@@ -32,20 +36,9 @@ std::vector<ThreadsConfig> threadsConfigs = {
   ThreadsConfig(1, 8, 35, 8, 30),
 };
 
-std::ostream& operator<<(std::ostream& os, const ThreadsConfig& threadsConfig) {
-  os << threadsConfig.nbThreadsComputeDiagonalTask << "-"
-     << threadsConfig.nbThreadsComputeColumnTask << "-"
-     << threadsConfig.nbThreadsUpdateTask << "-"
-     << threadsConfig.nbThreadsSolveDiagonal << "-"
-     << threadsConfig.nbThreadsUpdateVector;
-  return os;
-}
-
-std::string dotFileName(size_t height, ThreadsConfig config) {
-  std::ostringstream oss;
-  oss << height << "-" << config << ".dot";
-  return oss.str();
-}
+/******************************************************************************/
+/* run the algorithm                                                          */
+/******************************************************************************/
 
 void cholesky(Config const &config,
               std::shared_ptr<MatrixData<MatrixType, MatrixTypes::Matrix>> matrix,

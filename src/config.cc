@@ -55,3 +55,17 @@ void parseCmdArgs(int argc, char **argv, Config &config) {
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
 }
 
+std::ostream& operator<<(std::ostream& os, const ThreadsConfig& threadsConfig) {
+  os << threadsConfig.nbThreadsComputeDiagonalTask << "-"
+     << threadsConfig.nbThreadsComputeColumnTask << "-"
+     << threadsConfig.nbThreadsUpdateTask << "-"
+     << threadsConfig.nbThreadsSolveDiagonal << "-"
+     << threadsConfig.nbThreadsUpdateVector;
+  return os;
+}
+
+std::string dotFileName(size_t height, ThreadsConfig config) {
+  std::ostringstream oss;
+  oss << height << "-" << config << ".dot";
+  return oss.str();
+}

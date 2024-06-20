@@ -31,6 +31,8 @@ struct Config {
   ThreadsConfig threadsConfig;
 };
 
+std::ostream& operator<<(std::ostream& os, const ThreadsConfig& threadsConfig);
+std::string dotFileName(size_t height, ThreadsConfig config);
 void parseCmdArgs(int argc, char **argv, Config &config);
 
 #endif
