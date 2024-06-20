@@ -238,9 +238,15 @@ def create_plot(x, datas, xlabel, ylabel, title, legend=True, std=False,
     plt.clf()
 
 
-def generate_time_plot(size, block_size, filename):
+def sort_threads():
+    # sort on update matrix block
     sorted_threads = sorted(threads_list, key = lambda threads: int(threads.split('-')[2]))
     x_axis = list(map(lambda threads: int(threads.split('-')[2]), sorted_threads))
+    return sorted_threads, x_axis
+
+
+def generate_time_plot(size, block_size, filename):
+    sorted_threads, x_axis = sort_threads()
     times = { "hedgehog": [], "openblas": [] }
 
     for threads, x in zip(sorted_threads, x_axis):
@@ -249,7 +255,7 @@ def generate_time_plot(size, block_size, filename):
         times["hedgehog"].append((hh_time, hh_std))
         lapack_time = lapack_measures[size][x].mean()
         lapack_std = lapack_measures[size][x].std()
-        times["openblas"].append((lapack_time, hh_std))
+        times["openblas"].append((lapack_time, lapack_std))
 
     create_plot(x_axis,
                 times,
@@ -262,8 +268,7 @@ def generate_time_plot(size, block_size, filename):
 
 
 def generate_speedup_plot(size, block_size, filename):
-    sorted_threads = sorted(threads_list, key = lambda threads: int(threads.split('-')[2]))
-    x_axis = list(map(lambda threads: int(threads.split('-')[2]), sorted_threads))
+    sorted_threads, x_axis = sort_threads()
     speedups = []
 
     for threads, x in zip(sorted_threads, x_axis):
@@ -281,8 +286,7 @@ def generate_speedup_plot(size, block_size, filename):
 
 
 def generate_relative_speedup_plot(size, block_size, filename):
-    sorted_threads = sorted(threads_list, key = lambda threads: int(threads.split('-')[2]))
-    x_axis = list(map(lambda threads: int(threads.split('-')[2]), sorted_threads))
+    sorted_threads, x_axis = sort_threads()
     speedups = { "hedgehog": [], "openblas": [] }
     hh_one_thread_time = hh_measures[size][sorted_threads[0]][block_size].mean()
     lapack_one_thread_time = lapack_measures[size][x_axis[0]].mean()
@@ -307,7 +311,7 @@ def generate_relative_speedup_plot(size, block_size, filename):
 ################################################################################
 
 parse_results_hh("./results-hh-10000")
-parse_results_lapack("../../cholesky-one-thread/scripts/first-desktop-measures")
+parse_results_lapack("../../cholesky-one-thread/scripts/results")
 generate_hh_report("repport.md")
 generate_speedup_plot(10000, 256, "speedup10000.pdf")
 generate_time_plot(10000, 256, "times10000.pdf")
