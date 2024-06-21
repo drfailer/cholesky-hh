@@ -30,14 +30,15 @@ class MeasureLapack(Measure):
 
 
 class MeasureHH(Measure):
-    def __init__(self, size, block_size, dThreads, cThreads, uThreads, sThreads, vThreads):
+    def __init__(self, size, block_size, threads):
         Measure.__init__(self, size)
         self.block_size = block_size
-        self.dThreads = dThreads
-        self.cThreads = cThreads
-        self.uThreads = uThreads
-        self.sThreads = sThreads
-        self.vThreads = vThreads
+        tmp = threads.split("-")
+        self.dThreads = tmp[0]
+        self.cThreads = tmp[1]
+        self.uThreads = tmp[2]
+        self.sThreads = tmp[3]
+        self.vThreads = tmp[4]
 
     def threads(self):
         return f"{self.dThreads}, {self.cThreads}, {self.uThreads}, {self.sThreads}, {self.vThreads}"
@@ -54,7 +55,6 @@ Matrix size: {self.size} ({self.block_size})
 #                            parsing times.txt file                            #
 ################################################################################
 
-# will contain all the hh_measures
 hh_measures = dict()
 lapack_measures = dict()
 sizes_list = set()
@@ -62,90 +62,52 @@ block_sizes_list = set()
 threads_list = set()
 
 
-def parse_choleksy_hh_cmd(cmd):
-    args = cmd.split(' ')
+def parse_hh_line(line):
+    params = line.strip().split(" ")
+    size = int(params[0])
+    block_size = int(params[1])
+    threads = params[2]
+    time = int(params[3][:-2])
 
-    size = int(args[4].split('/')[-1].split('.')[0])
-    dThreads = int(args[6])
-    cThreads = int(args[8])
-    uThreads = int(args[10])
-    sThreads = int(args[12])
-    vThreads = int(args[14])
-    block_size = int(args[16])
-    return MeasureHH(size, block_size, dThreads, cThreads, uThreads, sThreads,
-                     vThreads)
-
-
-def parse_measure_hh(line, size, threads, block_size):
-    line = line.strip()
-    if line[-2:] == "ms":
-        time = int(line[:-2])
-        hh_measures[size][threads][block_size].add_time(time)
-    else:
-        measure = parse_choleksy_hh_cmd(line)
-        size = measure.size
-        if not size in hh_measures.keys():
-            hh_measures[size] = dict()
-        if not threads in hh_measures[size].keys():
-            hh_measures[size][threads] = dict()
+    if not size in hh_measures.keys():
+        hh_measures[size] = dict()
         sizes_list.add(size)
-        block_sizes_list.add(block_size)
+
+    if not threads in hh_measures[size].keys():
+        hh_measures[size][threads] = dict()
         threads_list.add(threads)
-        hh_measures[size][threads][block_size] = measure
 
-    return size
+    if not block_size in hh_measures[size][threads].keys():
+        hh_measures[size][threads][block_size] = MeasureHH(size, block_size,
+                                                           threads)
+        block_sizes_list.add(block_size)
 
+    hh_measures[size][threads][block_size].add_time(time)
 
-def parse_time_file(result_dir, threads_dir, block_dir):
-    path = f"{result_dir}/{threads_dir}/{block_dir}/times.txt"
-    size = 0
-    threads = threads_dir
-    block_size = int(block_dir)
-    with open(path, "r") as file:
+def parse_hh(result_file):
+    with open(result_file, "r") as file:
         for line in file:
-            size = parse_measure_hh(line, size, threads, block_size)
+            parse_hh_line(line)
 
 
-################################################################################
-#                            parse result directory                            #
-################################################################################
+def parse_lapack_line(line):
+    params = line.strip().split(" ")
+    size = int(params[0])
+    threads = int(params[1])
+    time = int(params[2][:-2])
 
-
-def parse_threads_results(result_dir, threads_dir):
-    dirs = os.listdir(f"{result_dir}/{threads_dir}")
-
-    for block_dir in dirs:
-        parse_time_file(result_dir, threads_dir, block_dir)
-
-
-def parse_results_hh(result_dir):
-    dirs = os.listdir(result_dir)
-    dirs.remove("cpuinfo.txt")
-
-    for threads_dir in dirs:
-        parse_threads_results(result_dir, threads_dir)
-
-
-def parse_times_lapack(threads, filename):
-    size = int(filename.split('/')[-1][6: -4])
-
-    if not size in lapack_measures:
+    if not size in lapack_measures.keys():
         lapack_measures[size] = dict()
-    lapack_measures[size][threads] = MeasureLapack(size, threads)
-    with open(filename, "r") as file:
+    if not threads in lapack_measures[size].keys():
+        lapack_measures[size][threads] = MeasureLapack(size, threads)
+
+    lapack_measures[size][threads].add_time(time)
+
+
+def parse_lapack(result_file):
+    with open(result_file, "r") as file:
         for line in file:
-            time = int(line[:-3])
-            lapack_measures[size][threads].add_time(time)
-
-
-def parse_threads_lapack(result_dir, threads_dir):
-    for file in os.listdir(f"{result_dir}/{threads_dir}"):
-        parse_times_lapack(int(threads_dir), f"{result_dir}/{threads_dir}/{file}")
-
-
-def parse_results_lapack(result_dir):
-    for threads_dir in os.listdir(result_dir):
-        parse_threads_lapack(result_dir, threads_dir)
+            parse_lapack_line(line)
 
 
 ################################################################################
@@ -153,7 +115,7 @@ def parse_results_lapack(result_dir):
 ################################################################################
 
 def hh_best_measure(size):
-    result = MeasureHH(0, 0, 0, 0, 0, 0, 0)
+    result = MeasureHH(0, 0, "0-0-0-0-0")
 
     for threads_values in hh_measures[size].values():
         for measure in threads_values.values():
@@ -310,8 +272,9 @@ def generate_relative_speedup_plot(size, block_size, filename):
 #                                    script                                    #
 ################################################################################
 
-parse_results_hh("./results-hh-10000")
-parse_results_lapack("../../cholesky-one-thread/scripts/results")
+parse_hh("./results-hh-10000/times-10000-256.txt")
+parse_lapack("../../cholesky-one-thread/scripts/results/times-10000.txt")
+
 generate_hh_report("repport.md")
 generate_speedup_plot(10000, 256, "speedup10000.pdf")
 generate_time_plot(10000, 256, "times10000.pdf")
