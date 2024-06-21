@@ -32,7 +32,7 @@ struct Config {
 };
 
 std::ostream& operator<<(std::ostream& os, const ThreadsConfig& threadsConfig);
-std::string dotFileName(size_t height, ThreadsConfig config);
+std::string dotFileName(size_t height, size_t blockSize, ThreadsConfig config);
 void parseCmdArgs(int argc, char **argv, Config &config);
 
 #endif

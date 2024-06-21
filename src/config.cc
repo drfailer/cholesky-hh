@@ -64,8 +64,8 @@ std::ostream& operator<<(std::ostream& os, const ThreadsConfig& threadsConfig) {
   return os;
 }
 
-std::string dotFileName(size_t height, ThreadsConfig config) {
+std::string dotFileName(size_t size, size_t blockSize, ThreadsConfig config) {
   std::ostringstream oss;
-  oss << height << "-" << config << ".dot";
+  oss << size << "-" << blockSize << "-" << config << ".dot";
   return oss.str();
 }

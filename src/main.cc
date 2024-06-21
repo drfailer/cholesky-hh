@@ -61,15 +61,16 @@ void cholesky(Config const &config,
   choleskyGraph.waitForTermination();
 
   auto end = std::chrono::system_clock::now();
-  std::cout << config.threadsConfig << " "
+  std::cout << matrix->height() << " " << matrix->blockSize() << " " << config.threadsConfig << " "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms"
             << std::endl;
 
   /* create dot file */
-  if (config.dotFile.empty()) {
-    choleskyGraph.createDotFile(
-        dotFileName(matrix->height(), config.threadsConfig),
-        hh::ColorScheme::EXECUTION, hh::StructureOptions::QUEUE);
+  if (!config.dotFile.ends_with(".dot")) {
+    std::string dotFileNameStr = config.dotFile + "/"
+      + dotFileName(matrix->height(), matrix->blockSize(), config.threadsConfig);
+    choleskyGraph.createDotFile(dotFileNameStr, hh::ColorScheme::EXECUTION,
+        hh::StructureOptions::QUEUE);
   } else {
     choleskyGraph.createDotFile(config.dotFile, hh::ColorScheme::EXECUTION,
         hh::StructureOptions::QUEUE);
