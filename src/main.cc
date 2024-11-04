@@ -1,113 +1,111 @@
-#include "graph/cholesky_decomposition_graph.h"
+#include "data/matrix_data.h"
+#include "data/matrix_types.h"
+#include "graph/cholesky_graph.h"
 #include "utils.h"
 #include "config.h"
 #include <cblas.h>
 #include <iostream>
-#include <fstream>
 #include <chrono>
 #include <memory>
-#define TESTING
+#include <vector>
+#define NB_MEASURES 10
 
 using MatrixType = double;
 
-template <typename T>
-std::pair<std::shared_ptr<MatrixData<T>>, std::shared_ptr<MatrixData<T>>>
-initMatrix(Config const &config) {
-  std::ifstream fs(config.inputFile, std::ios::binary);
-  size_t width, height;
+/******************************************************************************/
+/* threads config                                                             */
+/******************************************************************************/
 
-  // make openblas using only one thread
-  openblas_set_num_threads(1);
+std::vector<ThreadsConfig> threadsConfigs = {
+  // place some values
+};
 
-  fs.read(reinterpret_cast<char*>(&width), sizeof(width));
-  fs.read(reinterpret_cast<char*>(&height), sizeof(height));
-  auto matrix = std::make_shared<MatrixData<T>>(width, height,
-      config.blockSize, new T[width * height]());
-#ifdef TESTING
-  auto expected = std::make_shared<MatrixData<T>>(width, height,
-      config.blockSize, new T[width * height]());
-#endif
+void initThreadsConfig() {
+  threadsConfigs.clear();
 
-  for (size_t i = 0; i < width * height; ++i) {
-    fs.read(reinterpret_cast<char*>(matrix->get() + i), sizeof(matrix->get()[i]));
+  for (size_t i = 5; i <= 40; i += 5) {
+    threadsConfigs.push_back(ThreadsConfig(1, 8, i, 8, 30));
   }
-
-#ifdef TESTING
-  fs.read(reinterpret_cast<char*>(&width), sizeof(width));
-  fs.read(reinterpret_cast<char*>(&height), sizeof(height));
-  for (size_t i = 0; i < width * height; ++i) {
-    fs.read(reinterpret_cast<char*>(expected->get() + i), sizeof(expected->get()[i]));
-  }
-#endif
-
-#ifdef TESTING
-  return std::make_pair(matrix, expected);
-#else
-  return std::make_pair(matrix, nullptr);
-#endif
 }
 
-int main(int argc, char **argv) {
-  Config config = {
-    .inputFile = "cholesky.in",
-    .dotFile = "cholesky-graph.dot",
-    .blockSize = 10,
-    .nbThreadsComputeDiagonalTask = 1,
-    .nbThreadsComputeColumnTask = 4,
-    .nbThreadsUpdateTask = 4,
-    .print = false
-  };
+/******************************************************************************/
+/* run the algorithm                                                          */
+/******************************************************************************/
 
-  parseCmdArgs(argc, argv, config);
-
-  auto input = initMatrix<MatrixType>(config);
-  auto matrix = input.first;
-#ifdef TESTING
-  auto expected = input.second;
-#endif
-
-  if (config.print) {
-    std::cout << "matrix:" << std::endl;
-    std::cout << *matrix << std::endl;
-  }
-
-  CholeskyDecompositionGraph<MatrixType> choleskyGraph(
-      config.nbThreadsComputeDiagonalTask,
-      config.nbThreadsComputeColumnTask,
-      config.nbThreadsUpdateTask);
-
+void cholesky(Config const &config,
+              std::shared_ptr<MatrixData<MatrixType, MatrixTypes::Matrix>> &matrix,
+              std::shared_ptr<MatrixData<MatrixType, MatrixTypes::Vector>> &result) {
+  CholeskyGraph<MatrixType> choleskyGraph(
+          config.threadsConfig.nbThreadsComputeDiagonalTask,
+          config.threadsConfig.nbThreadsComputeColumnTask,
+          config.threadsConfig.nbThreadsUpdateTask,
+          config.threadsConfig.nbThreadsSolveDiagonal,
+          config.threadsConfig.nbThreadsUpdateVector);
   choleskyGraph.executeGraph(true);
+
+  /* launch the graph */
 
   auto begin = std::chrono::system_clock::now();
 
   choleskyGraph.pushData(matrix);
+  choleskyGraph.pushData(result);
   choleskyGraph.finishPushingData();
   choleskyGraph.waitForTermination();
 
   auto end = std::chrono::system_clock::now();
-  std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+  std::cout << matrix->height() << " " << matrix->blockSize() << " " << config.threadsConfig << " "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms"
+            << std::endl;
 
-  if (config.print) {
-#ifdef TESTING
-    std::cout << "expected:" << std::endl;
-    std::cout << *expected << std::endl;
-#endif
-    std::cout << "found:" << std::endl;
-    std::cout << *matrix << std::endl;
+  /* create dot file */
+  if (!config.dotFile.ends_with(".dot")) {
+    std::string dotFileNameStr = config.dotFile + "/"
+      + dotFileName(matrix->height(), matrix->blockSize(), config.threadsConfig);
+    choleskyGraph.createDotFile(dotFileNameStr, hh::ColorScheme::EXECUTION,
+        hh::StructureOptions::QUEUE);
+  } else {
+    choleskyGraph.createDotFile(config.dotFile, hh::ColorScheme::EXECUTION,
+        hh::StructureOptions::QUEUE);
+  }
+}
+
+/******************************************************************************/
+/* main                                                                       */
+/******************************************************************************/
+
+int main(int argc, char **argv) {
+  Config config = {
+          .inputFile = "cholesky.in",
+          .dotFile = "cholesky-graph.dot",
+          .blockSize = 10,
+          .print = false,
+          .loop = false,
+          .threadsConfig = ThreadsConfig()
+  };
+
+  openblas_set_num_threads(1);
+  parseCmdArgs(argc, argv, config);
+
+  auto problem = initMatrix<MatrixType>(config); // matrix allocated
+  initThreadsConfig();
+
+  if (config.loop) {
+    for (auto threadsConfig : threadsConfigs) {
+      for (size_t nbMeasures = 0; nbMeasures < NB_MEASURES; ++nbMeasures) {
+        config.threadsConfig = threadsConfig;
+        cholesky(config, problem.matrix, problem.result);
+        verifySolution(problem, 1e-3);
+        problem.matrix->reset(problem.baseMatrix);
+        problem.result->reset(problem.baseResult);
+      }
+    }
+  } else {
+    cholesky(config, problem.matrix, problem.result);
+    verifySolution(problem, 1e-3);
   }
 
-  choleskyGraph.createDotFile(config.dotFile, hh::ColorScheme::EXECUTION,
-                              hh::StructureOptions::QUEUE);
+  print(config, problem);
 
-#ifdef TESTING
-  if (!verrifySolution(matrix->width(), matrix->get(), expected->get(), 1e-3)) {
-    std::cout << "ERROR" << std::endl;
-  }
-#endif
-
-  delete[] matrix->get();
-#ifdef TESTING
-  delete[] expected->get();
-#endif
+  free(problem); // matrix freed
   return 0;
 }

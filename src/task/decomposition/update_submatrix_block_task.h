@@ -1,24 +1,25 @@
 #ifndef CHOLESKY_HH_UPDATE_SUBMATRIX_BLOCK_TASK_H
 #define CHOLESKY_HH_UPDATE_SUBMATRIX_BLOCK_TASK_H
 
-#include <hedgehog/hedgehog.h>
+#include "hedgehog/hedgehog/hedgehog.h"
 #include <cblas.h>
-#include "../data/matrix_block_data.h"
-#include "../data/triple_block_data.h"
+#include "../../data/matrix_block_data.h"
+#include "../../data/triple_block_data.h"
 
-template<typename T>
+template <typename T>
 using UpdateSubmatrixBlockInputType = TripleBlockData<T>;
 
 #define USBTaskInNb 1
 #define USBTaskIn UpdateSubmatrixBlockInputType<T>
 #define USBTaskOut MatrixBlockData<T, Updated>
 
-template<typename T>
-class UpdateSubMatrixBlockTask : public hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut > {
+template <typename T>
+class UpdateSubMatrixBlockTask
+        : public hh::AbstractAtomicTask<USBTaskInNb, USBTaskIn, USBTaskOut > {
  public:
   explicit UpdateSubMatrixBlockTask(size_t nbThreads) :
-          hh::AbstractTask<USBTaskInNb, USBTaskIn, USBTaskOut >("Update Submatrix Block Task",
-                                                                nbThreads) {}
+          hh::AbstractAtomicTask<USBTaskInNb, USBTaskIn, USBTaskOut >("Update Submatrix Block Task",
+                                                                      nbThreads) {}
 
   /// @brief Receives 3 blocks. The first two blocks are on the column that is processed. The third
   /// block will be updated. Here we do $updatedB = updatedB - colB1.colB2^T$.

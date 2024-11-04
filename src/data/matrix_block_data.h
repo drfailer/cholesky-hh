@@ -7,7 +7,7 @@
 #include <memory>
 #include <hedgehog/hedgehog.h>
 
-template<typename T, BlockTypes BlockType>
+template <typename T, BlockTypes BlockType>
 class MatrixBlockData {
  public:
   MatrixBlockData(size_t width, size_t height, size_t nbBlocksRows, size_t nbBlocksCols, size_t x,
@@ -16,7 +16,7 @@ class MatrixBlockData {
             nbBlocksCols_(nbBlocksCols), x_(x), y_(y), matrixWidth_(matrixWidth),
             matrixHeight_(matrixHeight), ptr_(ptr), fullMatrix_(fullMatrix) {}
 
-  template<BlockTypes OtherType>
+  template <BlockTypes OtherType>
   explicit MatrixBlockData(std::shared_ptr<MatrixBlockData<T, OtherType>> &other)
           : MatrixBlockData(other->width(), other->height(), other->nbBlocksRows(),
                             other->nbBlocksCols(), other->x(), other->y(), other->matrixWidth(),
@@ -24,7 +24,7 @@ class MatrixBlockData {
     rank_ = other->rank();
   }
 
-  template<BlockTypes OtherType>
+  template <BlockTypes OtherType>
   explicit MatrixBlockData(std::shared_ptr<MatrixBlockData<T, OtherType>> &&other)
           : MatrixBlockData(other->width(), other->height(), other->nbBlocksRows(),
                             other->nbBlocksCols(), other->x(), other->y(), other->matrixWidth(),
@@ -32,7 +32,7 @@ class MatrixBlockData {
     rank_ = other->rank();
   }
 
-  template<BlockTypes OtherType>
+  template <BlockTypes OtherType>
   explicit MatrixBlockData(MatrixBlockData<T, OtherType> &&other)
           : MatrixBlockData(other.width(), other.height(), other.nbBlocksRows(),
                             other.nbBlocksCols(), other.x(), other.y(), other.matrixWidth(),
@@ -55,7 +55,8 @@ class MatrixBlockData {
   [[nodiscard]] size_t matrixHeight() const { return matrixHeight_; }
 
   [[nodiscard]] size_t rank() const { return rank_; }
-  void incRank() { ++rank_; }
+  size_t incRank() { return ++rank_; }
+  size_t decRank() { return --rank_; }
   void rank(size_t rank) { rank_ = rank; }
 
   // helper functions to simplify tests
@@ -63,8 +64,6 @@ class MatrixBlockData {
   [[nodiscard]] bool isReady() const { return rank_ == x_; }
   [[nodiscard]] bool isUpdateable(size_t rank) const { return rank_ == rank - 1; }
   [[nodiscard]] bool isDiag() const { return y_ == x_; }
-  [[nodiscard]] bool isDiag(size_t idx) const { return y_ == x_ && x_ == idx; }
-  [[nodiscard]] bool isOnCol(size_t col) const { return col == x_; }
 
   [[nodiscard]] size_t idx() const { return y_ * nbBlocksCols_ + x_; }
   [[nodiscard]] size_t diagIdx() const { return x_ * nbBlocksCols_ + x_; }
@@ -77,14 +76,14 @@ class MatrixBlockData {
   T &at(size_t i, size_t j) { return ptr_[i * matrixWidth_ + j]; }
   T &fullMatrixAt(size_t i, size_t j) { return fullMatrix_[i * matrixWidth_ + j]; }
 
-  friend std::ostream&
-    operator<<(std::ostream& os, const MatrixBlockData<T, BlockType>& block) {
+  friend std::ostream &
+  operator<<(std::ostream &os, const MatrixBlockData<T, BlockType> &block) {
     os << block.x_ << " " << block.y_ << " (" << block.rank_ << ")";
     return os;
   }
 
-  friend std::ostream&
-    operator<<(std::ostream& os, const std::shared_ptr<MatrixBlockData<T, BlockType>>& block) {
+  friend std::ostream &
+  operator<<(std::ostream &os, const std::shared_ptr<MatrixBlockData<T, BlockType>> &block) {
     if (block) {
       os << *block;
     } else {

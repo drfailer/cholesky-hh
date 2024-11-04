@@ -4,7 +4,4 @@ src/compile_commands.json
 .idea
 cmake-build-debug
 src/.gdb_history
-scripts/result*
-scripts/*.md
-scripts/*.pdf
-repport
+setup.sh

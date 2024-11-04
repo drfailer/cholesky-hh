@@ -1,24 +1,24 @@
 #ifndef CHOLESKY_HH_COMPUTE_COLUMN_BLOCK_TASK_H
 #define CHOLESKY_HH_COMPUTE_COLUMN_BLOCK_TASK_H
 
-#include <hedgehog/hedgehog.h>
+#include "hedgehog/hedgehog/hedgehog.h"
 #include <cblas.h>
-#include "../data/matrix_block_data.h"
+#include "../../data/matrix_block_data.h"
 
 template<typename T>
 using CCBTaskInputType =
         std::pair<std::shared_ptr<MatrixBlockData<T, Diagonal>>,
-                std::shared_ptr<MatrixBlockData<T, Block>>>;
+                std::shared_ptr<MatrixBlockData<T, MatrixBlock>>>;
 
 #define CCBTaskInNb 1
 #define CCBTaskIn CCBTaskInputType<T>
 #define CCBTaskOut MatrixBlockData<T, Column>
 
 template<typename T>
-class ComputeColumnBlockTask : public hh::AbstractTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut > {
+class ComputeColumnBlockTask : public hh::AbstractAtomicTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut > {
  public:
   explicit ComputeColumnBlockTask(size_t nbThreads)
-          : hh::AbstractTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut >(
+          : hh::AbstractAtomicTask<CCBTaskInNb, CCBTaskIn, CCBTaskOut >(
           "Compute Column Block Task", nbThreads) {}
 
   /// @brief Receives a pair of blocks. The first block is a the diagonal element on the column and
