@@ -90,5 +90,9 @@ automatic_test() {
   done
 }
 
-# manual_test $1
-automatic_test $1
+if [ $# -eq 1 ]; then
+  # manual_test $1
+  automatic_test $1
+else
+  echo "error: requires size as argument."
+fi
