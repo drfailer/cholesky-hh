@@ -19,7 +19,7 @@ BLOCK_SIZE_MIN=256
 BLOCK_SIZE_MAX=256
 NB_MEASURES=10
 # threads for the tasks.
-# strings: "d c u" (diagonal column update)
+# strings: "d c u s v" (diagonal column update)
 declare -a THREADS=(
   "1 8 10 1 20"
   "1 8 15 1 20"
