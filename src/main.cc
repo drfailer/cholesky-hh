@@ -8,41 +8,33 @@
 #include <chrono>
 #include <memory>
 #include <vector>
-#define NB_MEASURES 5
-
-/******************************************************************************/
-/* parameters                                                                 */
-/******************************************************************************/
+#define NB_MEASURES 10
 
 using MatrixType = double;
 
-std::vector<ThreadsConfig> threadsConfigs = {
-  /* ThreadsConfig(1, 8, 35, 8, 1), */
-  /* ThreadsConfig(1, 8, 35, 8, 5), */
-  /* ThreadsConfig(1, 8, 35, 8, 10), */
-  /* ThreadsConfig(1, 8, 35, 8, 15), */
-  /* ThreadsConfig(1, 8, 35, 8, 20), */
-  /* ThreadsConfig(1, 8, 35, 8, 25), */
-  /* ThreadsConfig(1, 8, 35, 8, 30), */
-  /* ThreadsConfig(1, 8, 35, 8, 35), */
-  /* ThreadsConfig(1, 8, 35, 8, 40), */
+/******************************************************************************/
+/* threads config                                                             */
+/******************************************************************************/
 
-  ThreadsConfig(1, 8, 5, 8, 30),
-  ThreadsConfig(1, 8, 10, 8, 30),
-  ThreadsConfig(1, 8, 15, 8, 30),
-  ThreadsConfig(1, 8, 20, 8, 30),
-  ThreadsConfig(1, 8, 25, 8, 30),
-  ThreadsConfig(1, 8, 30, 8, 30),
-  ThreadsConfig(1, 8, 35, 8, 30),
+std::vector<ThreadsConfig> threadsConfigs = {
+  // place some values
 };
+
+void initThreadsConfig() {
+  threadsConfigs.clear();
+
+  for (size_t i = 5; i <= 40; i += 5) {
+    threadsConfigs.push_back(ThreadsConfig(1, 8, i, 8, 30));
+  }
+}
 
 /******************************************************************************/
 /* run the algorithm                                                          */
 /******************************************************************************/
 
 void cholesky(Config const &config,
-              std::shared_ptr<MatrixData<MatrixType, MatrixTypes::Matrix>> matrix,
-              std::shared_ptr<MatrixData<MatrixType, MatrixTypes::Vector>> result) {
+              std::shared_ptr<MatrixData<MatrixType, MatrixTypes::Matrix>> &matrix,
+              std::shared_ptr<MatrixData<MatrixType, MatrixTypes::Vector>> &result) {
   CholeskyGraph<MatrixType> choleskyGraph(
           config.threadsConfig.nbThreadsComputeDiagonalTask,
           config.threadsConfig.nbThreadsComputeColumnTask,
@@ -95,6 +87,7 @@ int main(int argc, char **argv) {
   parseCmdArgs(argc, argv, config);
 
   auto problem = initMatrix<MatrixType>(config); // matrix allocated
+  initThreadsConfig();
 
   if (config.loop) {
     for (auto threadsConfig : threadsConfigs) {

@@ -4,3 +4,4 @@ src/compile_commands.json
 .idea
 cmake-build-debug
 src/.gdb_history
+setup.sh

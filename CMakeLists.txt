@@ -10,9 +10,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_mo
 
 set(Hedgehog_INCLUDE_DIR lib/hedgehog/)
 
-include_directories(lib/ /home/rvc1/Documents/dev/lib/include/)
-link_directories(/home/rvc1/Documents/dev/lib/lib/)
-
 # Need to defined variable Hedgehog_INCLUDE_DIR to the hedgehog path hedgehog
 find_package(Hedgehog REQUIRED)
 
@@ -45,7 +42,7 @@ set(cholesky_hh_files
 		src/state/decomposition/update_submatrix_state.h
 		src/data/triple_block_data.h
 		src/state/decomposition/update_submatrix_state_manager.h
-    src/config.cc src/config.h
+        src/config.cc src/config.h
 		src/graph/cholesky_graph.h
 		src/data/matrix_types.h
 		src/data/solver/phases.h
@@ -54,3 +51,12 @@ set(cholesky_hh_files
 # executable
 add_executable(cholesky-hh ${cholesky_hh_files})
 target_link_libraries(cholesky-hh openblas)
+
+# if openblas is installed in a custom directory
+if (DEFINED EXTERNAL_LIB_DIR)
+    target_link_directories(cholesky-hh PRIVATE ${EXTERNAL_LIB_DIR}/lib)
+    target_include_directories(cholesky-hh PUBLIC ${EXTERNAL_LIB_DIR}/include)
+endif()
+
+# hedgehog and tclap (header file only libs)
+target_include_directories(cholesky-hh PRIVATE lib/)
