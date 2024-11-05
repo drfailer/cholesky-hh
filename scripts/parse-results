@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import sys
 
 ################################################################################
 #                                   Measure                                    #
@@ -272,10 +273,24 @@ def generate_relative_speedup_plot(size, block_size, filename):
 #                                    script                                    #
 ################################################################################
 
-parse_hh("./results-hh-10000/times-10000-256.txt")
-parse_lapack("../../cholesky-one-thread/scripts/results/times-10000.txt")
+def main():
+    if len(sys.argv) != 5:
+        print("Usage: parse-result <HHOutputDir> <Size> <blockSize> <LapackFile>")
+        print("ex: parse-result results-hh-10000 10000 256 lapack/times-10000.txt")
+    else:
+        hh_output_dir = sys.argv[1]
+        size = int(sys.argv[2])
+        block_size = int(sys.argv[3])
+        lapack_file = sys.argv[4]
+        # parse result files
+        parse_hh(f"./{hh_output_dir}/times-{size}-{block_size}.txt")
+        parse_lapack(f"{lapack_file}")
+        # generate report
+        generate_hh_report("report.md")
+        generate_speedup_plot(size, block_size, f"speedup{size}.pdf")
+        generate_time_plot(size, block_size, f"times{size}.pdf")
+        generate_relative_speedup_plot(size, block_size, f"relative-speedup{size}.pdf")
 
-generate_hh_report("repport.md")
-generate_speedup_plot(10000, 256, "speedup10000.pdf")
-generate_time_plot(10000, 256, "times10000.pdf")
-generate_relative_speedup_plot(10000, 256, "relative-speedup10000.pdf")
+
+if __name__ == '__main__':
+    main()
