@@ -56,3 +56,14 @@ The following global variables can be used to create configurations:
 - `THREADS`: array of strings in which each string contains the number of
   threads for the different tasks separated by spaces (see `cholesky-hh -h` for
   more information on the configuration).
+
+## Parsing the results
+
+The `parse-result` script requires the results from lapack obtained using
+[this code](https://github.com/drfailer/cholesky).
+
+Usage of the script:
+
+```sh
+parse-result <HHOutputDir> <Size> <blockSize> <LapackFile>
+```
